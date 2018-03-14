@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os
 
-from notMnist import NotMnist
+from dataset import Dataset
 
 def xavier_init(size):
     in_dim = size[0]
@@ -12,9 +12,9 @@ def xavier_init(size):
     return tf.random_normal(shape=size, stddev=xavier_stddev)
 
 
-X = tf.placeholder(tf.float32, shape=[None, 784])
+X = tf.placeholder(tf.float32, shape=[None, 256*256])
 
-D_W1 = tf.Variable(xavier_init([784, 128]))
+D_W1 = tf.Variable(xavier_init([256*256, 128]))
 D_b1 = tf.Variable(tf.zeros(shape=[128]))
 
 D_W2 = tf.Variable(xavier_init([128, 1]))
@@ -23,13 +23,13 @@ D_b2 = tf.Variable(tf.zeros(shape=[1]))
 theta_D = [D_W1, D_W2, D_b1, D_b2]
 
 
-Z = tf.placeholder(tf.float32, shape=[None, 100])
+Z = tf.placeholder(tf.float32, shape=[None, 256*256])
 
-G_W1 = tf.Variable(xavier_init([100, 128]))
+G_W1 = tf.Variable(xavier_init([256*256, 128]))
 G_b1 = tf.Variable(tf.zeros(shape=[128]))
 
-G_W2 = tf.Variable(xavier_init([128, 784]))
-G_b2 = tf.Variable(tf.zeros(shape=[784]))
+G_W2 = tf.Variable(xavier_init([128, 256*256]))
+G_b2 = tf.Variable(tf.zeros(shape=[256*256]))
 
 theta_G = [G_W1, G_W2, G_b1, G_b2]
 
@@ -65,7 +65,7 @@ def plot(samples):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
-        plt.imshow(sample.reshape(28, 28), cmap='Greys_r')
+        plt.imshow(sample.reshape(256, 256), cmap='Greys_r')
 
     return fig
 
@@ -87,10 +87,10 @@ G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_f
 D_solver = tf.train.AdamOptimizer().minimize(D_loss, var_list=theta_D)
 G_solver = tf.train.AdamOptimizer().minimize(G_loss, var_list=theta_G)
 
-mb_size = 128
-Z_dim = 100
+mb_size = 32
+Z_dim = 256*256
 
-mnist = NotMnist()
+plant_data = Dataset('raw/grayscale/')
 
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
@@ -103,13 +103,13 @@ i = 0
 for it in range(1000000):
     if it % 1000 == 0:
         samples = sess.run(G_sample, feed_dict={Z: sample_Z(16, Z_dim)})
-
+        print (samples.shape)
         fig = plot(samples)
         plt.savefig('out/{}.png'.format(str(i).zfill(3)), bbox_inches='tight')
         i += 1
         plt.close(fig)
 
-    X_mb, _ = mnist.train.next_batch(mb_size)
+    X_mb, _ = plant_data.train.next_batch(mb_size)
 
     _, D_loss_curr = sess.run([D_solver, D_loss], feed_dict={X: X_mb, Z: sample_Z(mb_size, Z_dim)})
     _, G_loss_curr = sess.run([G_solver, G_loss], feed_dict={Z: sample_Z(mb_size, Z_dim)})

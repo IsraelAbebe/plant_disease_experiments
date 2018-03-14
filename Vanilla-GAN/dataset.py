@@ -5,11 +5,13 @@ import os
 
 
 class Dataset:
-    def __init__(self):
+    def __init__(self, directory_main):
         images, labels = [], []
+        classes = os.listdir(directory_main)
 
-        for i, letter in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']):
-            directory = 'notMNIST_small/%s/' % letter
+        for i, letter in enumerate(classes[:2]):
+            print (classes[:2])
+            directory = directory_main + '%s/' % letter
             files = os.listdir(directory)
             label = np.array([0] * 10)
             label[i] = 1

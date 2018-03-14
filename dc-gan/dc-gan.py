@@ -30,7 +30,7 @@ def montage(images):
 
 plant_data = Dataset('raw/grayscale/')
 tf.reset_default_graph()
-batch_size = 64
+batch_size = 32
 n_noise = 100
 
 X_in = tf.placeholder(dtype=tf.float32, shape=[None, Img_height, Img_width], name='X')
@@ -52,6 +52,7 @@ def binary_cross_entropy(x, z):
 def discriminator(img_in, reuse=None, keep_prob=keep_prob):
     activation = lrelu
     with tf.variable_scope("discriminator", reuse=reuse):
+        print (img_in.shape)
         x = tf.reshape(img_in, shape=[-1, Img_height, Img_width, 1])
         x = tf.layers.conv2d(x, kernel_size=5, filters=64, strides=2, padding='same', activation=activation)
         x = tf.layers.dropout(x, keep_prob)
@@ -62,6 +63,7 @@ def discriminator(img_in, reuse=None, keep_prob=keep_prob):
         x = tf.contrib.layers.flatten(x)
         x = tf.layers.dense(x, units=128, activation=activation)
         x = tf.layers.dense(x, units=1, activation=tf.nn.sigmoid)
+        print (x.shape)
         return x
 
 
@@ -69,6 +71,7 @@ def generator(z, keep_prob=keep_prob, is_training=is_training):
     activation = lrelu
     momentum = 0.99
     with tf.variable_scope("generator", reuse=None):
+
         x = z
         d1 = 4
         d2 = 1
@@ -76,7 +79,7 @@ def generator(z, keep_prob=keep_prob, is_training=is_training):
         x = tf.layers.dropout(x, keep_prob)
         x = tf.contrib.layers.batch_norm(x, is_training=is_training, decay=momentum)
         x = tf.reshape(x, shape=[-1, d1, d1, d2])
-        x = tf.image.resize_images(x, size=[7, 7])
+        x = tf.image.resize_images(x, size=[16, 16])
         x = tf.layers.conv2d_transpose(x, kernel_size=5, filters=64, strides=2, padding='same', activation=activation)
         x = tf.layers.dropout(x, keep_prob)
         x = tf.contrib.layers.batch_norm(x, is_training=is_training, decay=momentum)
@@ -119,7 +122,8 @@ for i in range(60000):
     keep_prob_train = 0.6  # 0.5
 
     n = np.random.uniform(0.0, 1.0, [batch_size, n_noise]).astype(np.float32)
-    batch = [np.reshape(b, [Img_height, Img_width]) for b in plant_data.train.next_batch(batch_size=batch_size)[0]]
+    batch = [np.reshape(b, [Img_height, Img_width]) for b in plant_data.train.next_batch(batch_size)[0]]
+
 
     d_real_ls, d_fake_ls, g_ls, d_ls = sess.run([loss_d_real, loss_d_fake, loss_g, loss_d],
                                                 feed_dict={X_in: batch, noise: n, keep_prob: keep_prob_train,

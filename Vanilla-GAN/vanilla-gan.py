@@ -8,15 +8,18 @@ from dataset import Dataset
 
 plt.switch_backend('agg')
 
+Img_height = 100
+Img_width = 100
+
 def xavier_init(size):
     in_dim = size[0]
     xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
     return tf.random_normal(shape=size, stddev=xavier_stddev)
 
 
-X = tf.placeholder(tf.float32, shape=[None, 256*256])
+X = tf.placeholder(tf.float32, shape=[None, Img_height*Img_width])
 
-D_W1 = tf.Variable(xavier_init([256*256, 128]))
+D_W1 = tf.Variable(xavier_init([Img_height*Img_width, 128]))
 D_b1 = tf.Variable(tf.zeros(shape=[128]))
 
 D_W2 = tf.Variable(xavier_init([128, 1]))
@@ -25,13 +28,13 @@ D_b2 = tf.Variable(tf.zeros(shape=[1]))
 theta_D = [D_W1, D_W2, D_b1, D_b2]
 
 
-Z = tf.placeholder(tf.float32, shape=[None, 256*256])
+Z = tf.placeholder(tf.float32, shape=[None, Img_height*Img_width])
 
-G_W1 = tf.Variable(xavier_init([256*256, 128]))
+G_W1 = tf.Variable(xavier_init([Img_height*Img_width, 128]))
 G_b1 = tf.Variable(tf.zeros(shape=[128]))
 
-G_W2 = tf.Variable(xavier_init([128, 256*256]))
-G_b2 = tf.Variable(tf.zeros(shape=[256*256]))
+G_W2 = tf.Variable(xavier_init([128, Img_height*Img_width]))
+G_b2 = tf.Variable(tf.zeros(shape=[Img_height*Img_width]))
 
 theta_G = [G_W1, G_W2, G_b1, G_b2]
 
@@ -67,7 +70,7 @@ def plot(samples):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
-        plt.imshow(sample.reshape(256, 256), cmap='Greys_r')
+        plt.imshow(sample.reshape(Img_height,Img_width), cmap='Greys_r')
 
     return fig
 
@@ -90,7 +93,7 @@ D_solver = tf.train.AdamOptimizer().minimize(D_loss, var_list=theta_D)
 G_solver = tf.train.AdamOptimizer().minimize(G_loss, var_list=theta_G)
 
 mb_size = 32
-Z_dim = 256*256
+Z_dim = Img_height*Img_width
 
 plant_data = Dataset('raw/grayscale/')
 

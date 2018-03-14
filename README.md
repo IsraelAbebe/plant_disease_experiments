@@ -1,4 +1,4 @@
-###GAN -  on [PlantVillage-Dataset](https://github.com/spMohanty/PlantVillage-Dataset)
+### GAN -  on [PlantVillage-Dataset](https://github.com/spMohanty/PlantVillage-Dataset)
 
 ***Objective***
 

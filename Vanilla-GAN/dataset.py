@@ -21,6 +21,7 @@ class Dataset:
                 except:
                     print "Skip a corrupted file: " + file
                     continue
+                im = im.resize((100, 100), Image.ANTIALIAS)
                 pixels = np.array(im.convert('L').getdata())
                 images.append(pixels / 255.0)
                 labels.append(label)

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 
 from utils import ProgressBar, plot
 
+from dataset import Dataset
+
 
 class InfoDCGAN(object):
     def __init__(self, config, sess):
@@ -36,7 +38,7 @@ class InfoDCGAN(object):
         if not os.path.exists(self.image_dir):
             os.makedirs(self.image_dir)
 
-        self.mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+        self.mnist = Dataset('raw/grayscale/')
 
         self.random_seed = 42
 

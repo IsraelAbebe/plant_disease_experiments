@@ -8,7 +8,7 @@ import numpy as np
 import math
 
 import tensorflow as tf
-from keras.datasets import mnist
+# from keras.datasets import mnist
 from tensorflow.contrib.layers import conv2d, conv2d_transpose, layer_norm, fully_connected
 
 import random
@@ -16,11 +16,13 @@ import save_images
 import os
 import time
 
+from dataset import Dataset
+
 """ Parameters """
 
-BATCH_SIZE = 128
-IMG_DIM = (28, 28, 1)
-Z_DIM = 80
+BATCH_SIZE = 64
+IMG_DIM = (64, 64, 1)
+Z_DIM = 1400
 ZC_DIM = 10
 ZU_DIM = 2
 
@@ -33,6 +35,8 @@ CRITIC_ITER = 5
 leakyrelu_alpha = 0.1
 
 
+mnist = Dataset('raw/grayscale/')
+
 def lrelu(x):
     return tf.nn.relu(x) - leakyrelu_alpha * tf.nn.relu(-x)
 
@@ -44,11 +48,16 @@ def generator_tf(x, reuse=True):
     with tf.variable_scope("Generator", reuse=reuse):
         x = tf.identity(x, name="input")
         x = tf.layers.dense(x, 1024, activation=tf.nn.relu)
-        x = tf.layers.dense(x, 7 * 7 * 128, activation=tf.nn.relu)
-        x = tf.reshape(x, [-1, 7, 7, 128])
-        x = tf.layers.conv2d_transpose(x, 64, 4, 2, padding='same', activation=tf.nn.relu)
-        x = tf.layers.conv2d_transpose(x, 1, 4, 2, padding='same', activation=tf.nn.tanh)
+        x = tf.layers.dense(x, 15 * 15 * 128, activation=tf.nn.relu)
+        x = tf.reshape(x, [-1, 15, 15, 128])
+        # print("output shape", x.shape)
+        x = tf.layers.conv2d_transpose(x, 64, 3, 2, padding='valid', activation=tf.nn.relu)
+        # print("after conv_transpose",x.shape)
+        x = tf.layers.conv2d_transpose(x, 1, 4, 2, padding='valid', activation=tf.nn.relu)
+        # print("after conv_transpose", x.shape)
+        # x = tf.layers.conv2d_transpose(x, 1, 4, 2, padding='valid', activation=tf.nn.tanh)
         x = tf.identity(x, name="output")
+        # print("in gen",x.shape)
 
         return x
 
@@ -114,14 +123,14 @@ def random_z():
 
 def train():
     # Prepare Training Data
-    (X_train, _), (X_test, _) = mnist.load_data()
+    # (X_train, _), (X_test, _) = mnist.load_data()
 
-    X_train_list = prepare_mnist_list(X_train)
-    X_test_list = prepare_mnist_list(X_test)
+    # X_train_list = prepare_mnist_list(X_train)
+    # X_test_list = prepare_mnist_list(X_test)
 
     # Initialize Models
 
-    real_data = tf.placeholder(tf.float32, (None, *IMG_DIM))
+    real_data = tf.placeholder(tf.float32, (None, 64 , 64 , 1))
     z_ph = tf.placeholder(tf.float32, (None, Z_DIM))
 
     fake_data = generator_tf(z_ph, reuse=False)
@@ -162,7 +171,9 @@ def train():
     for it in range(ITERS):
         start_time = time.time()
         for i in range(CRITIC_ITER):
-            data = np.array(random.sample(X_train_list, BATCH_SIZE))
+            # data = np.array(random.sample(X_train_list, BATCH_SIZE))
+            data, _ = mnist.train.next_batch(BATCH_SIZE)
+            data  = np.reshape(data,(BATCH_SIZE,64,64,1))
             d_cost_rez, _ = sess.run([d_cost, d_train_op], feed_dict={real_data: data, z_ph: random_z()})
 
         g_cost_rez, q_cost_rez, _, _ = sess.run([g_cost, q_cost, g_train_op, q_train_op], feed_dict={z_ph: random_z()})
@@ -172,9 +183,11 @@ def train():
 
         if ((it ) % 10 == 0):
             samples = sess.run([fake_data], feed_dict={z_ph: fix_z})
-            save_images.save_images(np.squeeze(samples), 'figs/samples_%.6i.png' % (it))
+            save_images.save_images(np.squeeze(samples[:4]), 'figs/samples_%.6i.png' % (it))
 
-            data = np.array(random.sample(X_test_list, BATCH_SIZE))
+            # data = np.array(random.sample(X_test_list, BATCH_SIZE))
+            data,_ = mnist.train.next_batch(BATCH_SIZE)
+            data  = np.reshape(data,(BATCH_SIZE,64,64,1))
             g_cost_rez, d_cost_rez, q_cost_rez = sess.run([g_cost, d_cost, q_cost],
                                                           feed_dict={real_data: data, z_ph: random_z()})
             f_test_stat.write("%i %g %g %g\n" % (it, g_cost_rez, d_cost_rez, q_cost_rez))

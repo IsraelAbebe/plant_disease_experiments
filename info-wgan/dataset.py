@@ -5,15 +5,15 @@ import os
 
 
 class Dataset:
-    def __init__(self, directory_main):
+    def __init__(self, directory_main,num):
         images, labels = [], []
         classes = os.listdir(directory_main)
 
-        for i, letter in enumerate(classes[:2]):
-            print (classes[:1])
+        for i, letter in enumerate(classes[:3]):
+            print (classes[i])
             directory = directory_main + '%s/' % letter
             files = os.listdir(directory)
-            label = np.array([0] * 10)
+            label = np.array([0] * 38)
             label[i] = 1
             for file in files:
                 try:
@@ -22,9 +22,9 @@ class Dataset:
                     continue
                     # print "Skip a corrupted file: " + file
 
-                im = im.resize((64, 64), Image.ANTIALIAS)
+                im = im.resize((num, num), Image.ANTIALIAS)
                 pixels = np.array(im.convert('L').getdata())
-                images.append(pixels / 255.0)
+                images.append(pixels / 127.5)
                 labels.append(label)
         train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.2,
                                                                                 random_state=0)

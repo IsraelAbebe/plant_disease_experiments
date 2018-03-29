@@ -22,12 +22,12 @@ from dataset import Dataset
 
 BATCH_SIZE = 64
 IMG_DIM = (64, 64, 1)
-Z_DIM = 1400
-ZC_DIM = 10
+Z_DIM = IMG_DIM[0]*IMG_DIM[1]
+ZC_DIM = 2
 ZU_DIM = 2
 
 OUTPUT_DIM = int(np.prod(IMG_DIM))
-LAMBDA = 10
+LAMBDA = 2
 ITERS = 20001
 CRITIC_ITER = 5
 
@@ -35,7 +35,7 @@ CRITIC_ITER = 5
 leakyrelu_alpha = 0.1
 
 
-mnist = Dataset('raw/grayscale/')
+mnist = Dataset('raw/grayscale/',IMG_DIM[0])
 
 def lrelu(x):
     return tf.nn.relu(x) - leakyrelu_alpha * tf.nn.relu(-x)
@@ -154,9 +154,9 @@ def train():
     d_param = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='Discriminator')
     q_param = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='Q')
 
-    g_train_op = tf.train.RMSPropOptimizer(learning_rate=1e-3).minimize(g_cost, var_list=g_param)
-    d_train_op = tf.train.RMSPropOptimizer(learning_rate=1e-3).minimize(d_cost, var_list=d_param)
-    q_train_op = tf.train.RMSPropOptimizer(learning_rate=1e-3).minimize(q_cost, var_list=q_param + g_param)
+    g_train_op = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(g_cost, var_list=g_param)
+    d_train_op = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(d_cost, var_list=d_param)
+    q_train_op = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(q_cost, var_list=q_param + g_param)
 
     saver = tf.train.Saver(max_to_keep=20)
 
@@ -173,13 +173,13 @@ def train():
         for i in range(CRITIC_ITER):
             # data = np.array(random.sample(X_train_list, BATCH_SIZE))
             data, _ = mnist.train.next_batch(BATCH_SIZE)
-            data  = np.reshape(data,(BATCH_SIZE,64,64,1))
+            data  = np.reshape(data,(BATCH_SIZE,IMG_DIM[0],IMG_DIM[1],1))
             d_cost_rez, _ = sess.run([d_cost, d_train_op], feed_dict={real_data: data, z_ph: random_z()})
 
         g_cost_rez, q_cost_rez, _, _ = sess.run([g_cost, q_cost, g_train_op, q_train_op], feed_dict={z_ph: random_z()})
 
         f_train_stat.write("%i %g %g %g\n" % (it, g_cost_rez, d_cost_rez, q_cost_rez))
-        print(it, (time.time() - start_time))
+        print(it, (time.time() - start_time),g_cost_rez, d_cost_rez, q_cost_rez)
 
         if ((it ) % 10 == 0):
             samples = sess.run([fake_data], feed_dict={z_ph: fix_z})
@@ -187,7 +187,7 @@ def train():
 
             # data = np.array(random.sample(X_test_list, BATCH_SIZE))
             data,_ = mnist.train.next_batch(BATCH_SIZE)
-            data  = np.reshape(data,(BATCH_SIZE,64,64,1))
+            data  = np.reshape(data,(BATCH_SIZE,IMG_DIM[0],IMG_DIM[1],1))
             g_cost_rez, d_cost_rez, q_cost_rez = sess.run([g_cost, d_cost, q_cost],
                                                           feed_dict={real_data: data, z_ph: random_z()})
             f_test_stat.write("%i %g %g %g\n" % (it, g_cost_rez, d_cost_rez, q_cost_rez))

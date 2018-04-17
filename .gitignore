@@ -1,1 +1,4 @@
-.idea/
+.idea/*.jpg
+*.jpeg
+*.png
+*.gif

@@ -13,3 +13,7 @@ C) to learn a model on the set of plants belonging to a particular species
 * Tensorflow
 * Scipy
 * Numpy
+
+
+***Dataset***
+User raw folder from [PlantVillage-Dataset](https://github.com/spMohanty/PlantVillage-Dataset) in each folder

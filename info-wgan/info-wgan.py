@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-'''
-This code was originally written by Sergey Rodionov
-'''
+
 
 import argparse
 from PIL import Image

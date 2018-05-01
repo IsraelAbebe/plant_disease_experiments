@@ -1,4 +1,7 @@
-.idea/*.jpg
+.idea/*
+*.jpg
 *.jpeg
 *.png
 *.gif
+*.pyc
+

@@ -36,13 +36,14 @@ Disease Detection](https://arxiv.org/pdf/1604.03169.pdf)
 
 [Data set](https://github.com/spMohanty/PlantVillage-Dataset)
 
+[Models](https://gitlab.com/Israel777/Plant_Disease_Detection_models)
 
 Approches for Solving the papers realtime Detection Problem
 
 	phase 1 : implement the paper 
 	phase 2 : do analysis on the paper and identify the type of data problem 
-	phase 3 : 	experement and if possible generate Apprprate data
-				using the data train the model again
+	phase 3 : experement and if possible generate Apprprate data
+		  using the data train the model again
 				
 
 ### Installing
@@ -57,4 +58,7 @@ Keras 2.0
 ```
 
 ```
+<<<<<<< da313ba1655af3aba3f04d0af421dfeb0fb0884e
 >>>>>>> Updated README,dataset imported,added gitignore
+=======
+>>>>>>> updating git ignore

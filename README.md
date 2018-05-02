@@ -10,8 +10,8 @@ Approches for Solving the papers realtime Detection Problem
 
 	phase 1 : implement the paper 
 	phase 2 : do analysis on the paper and identify the type of data problem 
-	phase 3 : 	experement and if possible generate Apprprate data
-				using the data train the model again
+	phase 3 : experement and if possible generate Apprprate data
+		  using the data train the model again
 				
 
 ### Installing

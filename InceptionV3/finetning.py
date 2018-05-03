@@ -12,8 +12,8 @@ from keras.optimizers import SGD
 from keras.layers import Input
 
 IM_WIDTH, IM_HEIGHT = 100, 100  # fixed size for InceptionV3
-NB_EPOCHS = 50
-BAT_SIZE = 30
+NB_EPOCHS = 100
+BAT_SIZE = 64
 FC_SIZE = 1024
 NB_IV3_LAYERS_TO_FREEZE = 172
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     a.add_argument("--val_dir")
     a.add_argument("--nb_epoch", default=NB_EPOCHS)
     a.add_argument("--batch_size", default=BAT_SIZE)
-    a.add_argument("--output_model_file", default="model/3_vggface-fc.h5")
+    a.add_argument("--output_model_file", default="model/InceptionV3-plantDataset.h5")
     a.add_argument("--plot", action="store_true")
 
     args = a.parse_args()

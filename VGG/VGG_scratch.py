@@ -55,7 +55,7 @@ num_classes = len(glob.glob(train_dir + "/*"))
 nb_val_samples = get_nb_files(test_dir)
 
 # input image dimensions
-IM_WIDTH, IM_HEIGHT = 100, 100
+IM_WIDTH, IM_HEIGHT = 64, 64
 input_shape = (IM_WIDTH, IM_HEIGHT, 3)
 
 train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
@@ -92,7 +92,7 @@ model.add(Dropout(0.5))
 model.add(Dense(1024, activation='relu'))
 
 model.add(Dense(num_classes, activation='softmax'))
-model.compile(optimizer='Adadelta', loss='binary_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='Adadelta', loss='catagorical_crossentropy', metrics=['accuracy'])
 history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_epoch=nb_train_samples // batch_size,
                                     validation_data=test_generator, nb_val_samples=nb_val_samples // batch_size,
                                     class_weight='auto', callbacks=[csv_logger])

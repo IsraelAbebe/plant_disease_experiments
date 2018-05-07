@@ -5,6 +5,7 @@ Disease Detection](https://arxiv.org/pdf/1604.03169.pdf)
 
 [Data set](https://github.com/spMohanty/PlantVillage-Dataset)
 
+[Models](https://gitlab.com/Israel777/Plant_Disease_Detection)
 
 Approches for Solving the papers realtime Detection Problem
 

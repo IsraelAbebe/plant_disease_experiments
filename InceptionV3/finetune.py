@@ -6,15 +6,15 @@ import matplotlib.pyplot as plt
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras_vggface.vggface import VGGFace
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
+from keras.layers import Dense, GlobalAveragePooling2D,Dropout
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import SGD
 from keras.layers import Input
 
 IM_WIDTH, IM_HEIGHT = 100, 100  # fixed size for InceptionV3
-NB_EPOCHS = 100
-BAT_SIZE = 32
-FC_SIZE = 1024
+NB_EPOCHS = 50
+BAT_SIZE = 64
+FC_SIZE = 512
 NB_IV3_LAYERS_TO_FREEZE = 172
 
 
@@ -31,11 +31,6 @@ def get_nb_files(directory):
     return cnt
 
 
-def setup_to_transfer_learn(model, base_model):
-    """Freeze all layers and compile the model"""
-    for layer in base_model.layers:
-        layer.trainable = False
-    model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 def add_new_last_layer(base_model, nb_classes):
@@ -49,8 +44,11 @@ def add_new_last_layer(base_model, nb_classes):
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(FC_SIZE, activation='relu')(x)  # new FC layer, random init
+    x = Dropout(0.5)(x)
     x = Dense(FC_SIZE * 2, activation='relu')(x)  # new FC layer, random init
-    x = Dense(FC_SIZE * 4, activation='relu')(x)  # new FC layer, random init
+    x = Dropout(0.5)(x)
+    #x = Dense(FC_SIZE * 4, activation='relu')(x)  # new FC layer, random init
+    #x = Dropout(0.5)(x)
     predictions = Dense(nb_classes, activation='softmax')(x)  # new softmax layer
     model = Model(output=predictions, input=base_model.input)
     return model
@@ -66,7 +64,7 @@ def setup_to_finetune(model):
         layer.trainable = False
     for layer in model.layers[NB_IV3_LAYERS_TO_FREEZE:]:
         layer.trainable = True
-    model.compile(optimizer=Adam(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 def train(args):
@@ -92,12 +90,7 @@ def train(args):
 
     model = add_new_last_layer(base_model, nb_classes)
 
-    # transfer learning
-    setup_to_transfer_learn(model, base_model)
-
-    history_tl = model.fit_generator(train_generator, nb_epoch=nb_epoch, steps_per_epoch=nb_train_samples // batch_size,
-                                     validation_data=validation_generator, nb_val_samples=nb_val_samples // batch_size,
-                                     class_weight='auto')
+    
     # fine-tuning
     setup_to_finetune(model)
 
@@ -107,8 +100,7 @@ def train(args):
 
     model.save(args.output_model_file)
 
-    if args.plot:
-        plot_training(history_tl)
+    plot_training(history_ft)
 
 
 def plot_training(history):

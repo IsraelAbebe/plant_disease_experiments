@@ -9,6 +9,9 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import CSVLogger
 from keras import regularizers
 
+
+import matplotlib.pyplot as plt
+
 train_dir = "../dataset/color/train"
 test_dir = "../dataset/color/val"
 csv_logger = CSVLogger('log.csv', append=True, separator=';')
@@ -99,4 +102,4 @@ history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_
                                     class_weight='auto', callbacks=[csv_logger])
 plot_training(history_train)
 
-model.save("../Models/VGG_scratch.h5")
+model.save("../Models/Inception_Scratch.h5")

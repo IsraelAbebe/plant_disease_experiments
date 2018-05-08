@@ -89,7 +89,7 @@ def train(args):
                                                             batch_size=batch_size)
 
     # setup model
-    base_model = InceptionV3(input_tensor=Input(shape=(IM_HEIGHT, IM_WIDTH, 3)), weights='imagenet', include_top=False)
+    base_model = VGGFace(include_top=False, input_tensor=Input(shape=(IM_HEIGHT, IM_WIDTH, 3)))
 
     model = add_new_last_layer(base_model, nb_classes)
 

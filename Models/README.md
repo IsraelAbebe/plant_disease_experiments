@@ -1,1 +1,1 @@
-Here the training result models are stored
+[Here](https://gitlab.com/Israel777/Plant_Disease_Detection_models) are the trained models

@@ -6,14 +6,17 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.applications.inception_v3 import preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger, ReduceLROnPlateau, EarlyStopping
 from keras import regularizers
 
 import matplotlib.pyplot as plt
 
 train_dir = "../dataset/color/train"
 test_dir = "../dataset/color/val"
-csv_logger = CSVLogger('log.csv', append=True, separator=';')
+
+lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+csv_logger = CSVLogger('resnet18_plant.csv')
 
 
 def get_nb_files(directory):
@@ -45,9 +48,6 @@ def plot_training(history):
     plt.show()
 
 
-def custome_loss(y_pred, y_true):
-    print(y_pred, y_true)
-    return 0
 
 
 batch_size = 128
@@ -97,7 +97,7 @@ model.add(Dense(num_classes, activation='softmax'))
 model.compile(optimizer='Adadelta', loss='categorical_crossentropy', metrics=['accuracy'])
 history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_epoch=nb_train_samples // batch_size,
                                     validation_data=test_generator, nb_val_samples=nb_val_samples // batch_size,
-                                    class_weight='auto', callbacks=[csv_logger])
+                                    class_weight='auto', callbacks=[lr_reducer,early_stopper,csv_logger])
 plot_training(history_train)
 
 model.save("../Models/VGG_scratch.h5")

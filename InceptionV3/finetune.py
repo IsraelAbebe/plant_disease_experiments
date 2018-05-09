@@ -4,6 +4,7 @@ import glob
 import argparse
 import matplotlib.pyplot as plt
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
+from keras.callbacks import ReduceLROnPlateau, EarlyStopping, CSVLogger
 from keras_vggface.vggface import VGGFace
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D,Dropout
@@ -19,6 +20,13 @@ NB_IV3_LAYERS_TO_FREEZE = 172
 
 
 # python finetune.py --train_dir "../dataset/color/train" --val_dir "../dataset/color/val"
+
+
+lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
+early_stopper = EarlyStopping(min_delta=0.001, patience=10)
+csv_logger = CSVLogger('Inception_Finetuning_log.csv')
+
+
 
 def get_nb_files(directory):
     """Get number of files by searching directory recursively"""
@@ -96,7 +104,7 @@ def train(args):
 
     history_ft = model.fit_generator(train_generator, steps_per_epoch=nb_train_samples // batch_size, epochs=nb_epoch,
                                      validation_data=validation_generator,
-                                     validation_steps=nb_val_samples // batch_size)
+                                     validation_steps=nb_val_samples // batch_size,callbacks=[lr_reducer,early_stopper,csv_logger])
 
     model.save(args.output_model_file)
 
@@ -127,7 +135,7 @@ if __name__ == "__main__":
     a.add_argument("--val_dir")
     a.add_argument("--nb_epoch", default=NB_EPOCHS)
     a.add_argument("--batch_size", default=BAT_SIZE)
-    a.add_argument("--output_model_file", default="../Models/InceptionV3-plantDataset-noAugmentation.h5")
+    a.add_argument("--output_model_file", default="../Models/InceptionV3-finetuning.h5")
     a.add_argument("--plot", action="store_true")
 
     args = a.parse_args()

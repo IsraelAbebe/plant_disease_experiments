@@ -17,7 +17,7 @@ test_dir = "../dataset/color/val"
 
 lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
 early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-csv_logger = CSVLogger('resnet18_plant.csv')
+csv_logger = CSVLogger('alexnet_scratch_log.csv')
 
 
 def get_nb_files(directory):

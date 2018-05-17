@@ -1,1 +1,0 @@
-download [this](https://github.com/spMohanty/PlantVillage-Dataset/tree/master/raw) folder and put it  in here 

@@ -7,7 +7,11 @@ Disease Detection](https://arxiv.org/pdf/1604.03169.pdf)
 
 [Models](https://gitlab.com/Israel777/Plant_Disease_Detection_models)
 
+
+
 ### Approches for Solving the papers realtime Detection Problem
+
+
 
 phase 1 : [implement the paper](https://github.com/IsraelAbebe/plant_disease_experements/tree/master/Plant_Disease_Detection_Benchmark_models) 
 

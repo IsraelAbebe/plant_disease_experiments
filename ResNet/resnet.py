@@ -1,18 +1,14 @@
+'''
+ Adopted from https://github.com/raghakot/keras-resnet
+'''
+
 from __future__ import division
 
 import six
 from keras.models import Model
-from keras.layers import (
-    Input,
-    Activation,
-    Dense,
-    Flatten
-)
-from keras.layers.convolutional import (
-    Conv2D,
-    MaxPooling2D,
-    AveragePooling2D
-)
+from keras.layers import Input,Activation,Dense,Flatten
+from keras.layers.convolutional import Conv2D,MaxPooling2D,AveragePooling2D
+
 from keras.layers.merge import add
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2

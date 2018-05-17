@@ -8,6 +8,7 @@ from keras.applications.inception_v3 import preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import CSVLogger, ReduceLROnPlateau, EarlyStopping
 from keras import regularizers
+import numpy as np
 
 import matplotlib.pyplot as plt
 
@@ -16,7 +17,7 @@ test_dir = "../dataset/color/val"
 
 lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
 early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-csv_logger = CSVLogger('resnet18_plant.csv')
+csv_logger = CSVLogger('VGG_scratch_aug_log.csv')
 
 
 def get_nb_files(directory):
@@ -51,7 +52,7 @@ def plot_training(history):
 
 
 batch_size = 128
-epochs = 30
+epochs = 50
 nb_train_samples = get_nb_files(train_dir)
 num_classes = len(glob.glob(train_dir + "/*"))
 nb_val_samples = get_nb_files(test_dir)
@@ -60,8 +61,8 @@ nb_val_samples = get_nb_files(test_dir)
 IM_WIDTH, IM_HEIGHT = 64, 64
 input_shape = (IM_WIDTH, IM_HEIGHT, 3)
 
-train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,zoom_range=2,rotation_range=0.2,horizontal_flip=True)
+test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,zoom_range=2,rotation_range=0.2,horizontal_flip=True)
 
 train_generator = train_datagen.flow_from_directory(train_dir, target_size=(IM_WIDTH, IM_HEIGHT), batch_size=batch_size)
 
@@ -100,4 +101,4 @@ history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_
                                     class_weight='auto', callbacks=[lr_reducer,early_stopper,csv_logger])
 plot_training(history_train)
 
-model.save("../Models/VGG_scratch.h5")
+model.save("../Models/VGG_scratch_aug.h5")

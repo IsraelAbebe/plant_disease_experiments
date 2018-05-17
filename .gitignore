@@ -1,0 +1,14 @@
+.idea/*
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.pyc
+*.ipynb_checkpoints
+
+
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml

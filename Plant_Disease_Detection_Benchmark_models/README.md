@@ -1,29 +1,53 @@
-# Plant Disease Detection using Deep Learning
+# Plant Disease Detection Benchmark models
 
-[Using Deep Learning for Image-Based Plant
-Disease Detection](https://arxiv.org/pdf/1604.03169.pdf)
 
-[Data set](https://github.com/spMohanty/PlantVillage-Dataset)
+**Objective:**
+- Using different neural network Archetectures implement Neural Net Prediction Model ,Sothat we may have a baseline model accuracy to compare the future progress
 
-[Models](https://gitlab.com/Israel777/Plant_Disease_Detection_models)
+**Resources:**
+- [Using Deep Learning for Image-Based Plant Disease Detection](https://arxiv.org/pdf/1604.03169.pdf)
+- [Data set](https://github.com/spMohanty/PlantVillage-Dataset)
+- [Models](https://gitlab.com/Israel777/Plant_Disease_Detection_models)
 
-Approches for Solving the papers realtime Detection Problem
 
-	phase 1 : implement the paper 
-	phase 2 : do analysis on the paper and identify the type of data problem 
-	phase 3 : experement and if possible generate Apprprate data
-		  using the data train the model again
+## Usage
+
+**AlexNet**
+
+	python alexnet-scratch.py
+
+**InceptionV3**
+
+	python Inception_scratch.py
+	
+	python finetune.py
+
+**ResNet**
+	
+	python resnet.py
+
+**VGG**
+
+	python VGG_scratch.py
+	
+	python finetune.py
+
 				
 
-### Installing
+## Results From the Training
 
 
-```
-Tensorflow 1.5
-```
-```
-Keras 2.0
-```
-```
+**AlexNet**
+- Fine tuning  -
+- from Scratch - 98%
+	    
+**InceptionV3**
+- fine tuning  - 71%
+- from scratch - 94%
 
-```
+**Resnet**
+- 97%
+	    
+**VGG**
+- fine tuning  - 80%
+- from scratch - 94%

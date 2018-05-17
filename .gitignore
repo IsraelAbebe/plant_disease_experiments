@@ -3,6 +3,7 @@
 *.jpeg
 *.png
 *.gif
+<<<<<<< HEAD
 *.pyc
 *.ipynb_checkpoints
 
@@ -12,3 +13,6 @@
 .idea/dictionaries
 .idea/vcs.xml
 .idea/jsLibraryMappings.xml
+=======
+*.pyc
+>>>>>>> 2ccac0e... README and LICENCE added

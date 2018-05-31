@@ -4,21 +4,14 @@ import sys
 import numpy as np
 import random
 from keras import models
-from keras import optimizers
 from keras.layers import Input
-from keras.optimizers import Adam, Adagrad, Adadelta, Adamax, SGD
+from keras.optimizers import Adam
 from keras.callbacks import CSVLogger
 import scipy
 import h5py
 from args import Args
 from data import denormalize4gan
-#from layers import bilinear2x
-from discrimination import MinibatchDiscrimination
 from nets import build_discriminator, build_gen, build_enc
-
-#import tensorflow as tf
-#import keras
-#keras.backend.get_session().run(tf.initialize_all_variables())
 
 
 
@@ -134,7 +127,7 @@ def build_networks():
 
     # discriminator part
     disc = build_discriminator( shape )
-    disc.compile(optimizer=dopt, loss='binary_crossentropy')
+    disc.compile(optimizer=dopt, loss='catagorical_crossentropy')
     disc.summary()
 
     # GAN stack
@@ -144,7 +137,7 @@ def build_networks():
     gened = gen( noise )
     result = disc( gened )
     gan = models.Model( inputs=noise, outputs=result )
-    gan.compile(optimizer=opt, loss='binary_crossentropy')
+    gan.compile(optimizer=opt, loss='catagorical_crossentropy')
     gan.summary()
 
     return gen, disc, gan

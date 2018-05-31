@@ -3,3 +3,5 @@
 *.jpeg
 *.png
 *.gif
+
+*.py[oc]

@@ -18,6 +18,6 @@ phase 1 : [implement the paper](https://github.com/IsraelAbebe/plant_disease_exp
 phase 2 : do analysis on the paper and identify the type of data problem 
 
 phase 3 : [experement and if possible generate Apprprate data
-		  using the data train the model again](https://github.com/IsraelAbebe/plant_disease_experements/tree/master/Plant_Disease_Detection_gan_experimants)
+		  using the data and  train the model again](https://github.com/IsraelAbebe/plant_disease_experements/tree/master/Plant_Disease_Detection_gan_experimants)
 		
 

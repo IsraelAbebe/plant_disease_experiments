@@ -12,12 +12,12 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-train_dir = "../dataset/color/train"
-test_dir = "../dataset/color/val"
+train_dir = "../dataset/segmented_/train"
+test_dir = "../dataset/segmented_/val"
 
 lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
 early_stopper = EarlyStopping(min_delta=0.001, patience=10)
-csv_logger = CSVLogger('VGG_scratch_aug_log.csv')
+csv_logger = CSVLogger('VGG_scratch_segmented_log.csv')
 
 
 def get_nb_files(directory):
@@ -101,4 +101,4 @@ history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_
                                     class_weight='auto', callbacks=[lr_reducer,early_stopper,csv_logger])
 plot_training(history_train)
 
-model.save("../Models/VGG_scratch_aug.h5")
+model.save("../Models/VGG_scratch_segmented_.h5")

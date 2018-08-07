@@ -64,4 +64,30 @@ User raw folder from [PlantVillage-Dataset](https://github.com/spMohanty/PlantVi
 
 - segmentation pipline using VGGSegNet Architecture
 
+<<<<<<< HEAD:Plant_Disease_Detection_GAN_experimants/README.md
 >>>>>>> 3deaa1e... Update README.md:README.md
+=======
+**leaf-image-segmentation**
+
+- histogram based segmentation Pipline 
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c4886c9... Update README.md
+=======
+>>>>>>> 4bcacea... Update README.md
+=======
+
+
+
+
+# Usage
+
+	Python main.py --image "abc.jpg"
+
+- This will segment the image and predict the output class based on that . segmented image will be saved as the file name with "_masked" prefix.
+
+-  You can cheack the segmentation accuracy from saved image
+>>>>>>> 43ed67a... Readme Update
+>>>>>>> da5852f... histogram based segmentation module by Yared Taddese:README.md

@@ -1,3 +1,6 @@
+import os
+os.environ['KERAS_BACKEND'] = 'tensorflow'
+
 from keras.layers.convolutional import Conv2D, ZeroPadding2D, UpSampling2D
 from keras.layers.core import Flatten, Dense, Reshape, Permute, Activation
 from keras.layers.normalization import BatchNormalization

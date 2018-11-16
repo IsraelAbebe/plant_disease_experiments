@@ -7,7 +7,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ReduceLROnPlateau, CSVLogger, EarlyStopping
 
 import numpy as np
-from keras_vggface.utils import preprocess_input
+from keras.applications.resnet50 import preprocess_input
 
 import resnet
 import matplotlib.pyplot as plt
@@ -16,8 +16,8 @@ lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_
 early_stopper = EarlyStopping(min_delta=0.001, patience=10)
 csv_logger = CSVLogger('resnet18_plant.csv')
 
-train_dir = "../dataset/color/train"
-test_dir = "../dataset/color/val"
+train_dir = "../dataset/segmentedspecies/train"
+test_dir = "../dataset/segmentedspecies/val"
 
 
 def get_nb_files(directory):
@@ -71,6 +71,7 @@ model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
-model.fit_generator(train_generator, nb_epoch=epochs, steps_per_epoch=nb_train_samples // batch_size,
+history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_epoch=nb_train_samples // batch_size,
                     validation_data=test_generator, nb_val_samples=nb_val_samples // batch_size,
                     class_weight='auto', callbacks=[csv_logger])
+model.save("../Models/ResNet_.h5")

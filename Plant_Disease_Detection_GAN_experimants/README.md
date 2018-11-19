@@ -91,8 +91,12 @@ User raw folder from [PlantVillage-Dataset](https://github.com/spMohanty/PlantVi
 		- --image        a path of image 
 		-  --segment     True to  Segment before prediction , False not to 
 
+
+- before using that make sure you download the weights from [here](https://drive.google.com/file/d/1AufdWYl-TfeicAmaweq6Gd8q3--vuBfA/view?usp=sharing) and put it in Plant_Disease_Detection_Benchmark_models/Models/  folder 
 		
 - This will segment the image and predict the output class based on that . segmented image will be saved as the file name with "_masked" prefix.
+
+- the images are traine with segmented network and lower performance on unsegmented dataset is expected 
 
 -  You can cheack the segmentation accuracy from saved image
 >>>>>>> 43ed67a... Readme Update

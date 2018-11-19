@@ -3,7 +3,6 @@ import numpy as np
 from keras.models import load_model
 from PIL import Image
 from keras.preprocessing import image
-<<<<<<< HEAD
 import subprocess
 from keras.applications.inception_v3 import preprocess_input
 import argparse

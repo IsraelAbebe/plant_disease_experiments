@@ -3,6 +3,7 @@ import numpy as np
 from keras.models import load_model
 from PIL import Image
 from keras.preprocessing import image
+<<<<<<< HEAD
 import subprocess
 from keras.applications.inception_v3 import preprocess_input
 import argparse
@@ -10,8 +11,9 @@ import argparse
 parser = argparse.ArgumentParser()
 
 SPECIES = ['Apple','Bean','Blueberry','Cherry','Corn','Grape','Grapefruit','Orange','Peach','Pepper','Potato','Raspberry','Sorghum','Soybean','Squash','Strawberry','Sugarcane','Tomato']
-D_MODELS = ['Apple_0.9395_VGG.h5','Cherry_0.9873_VGG.h5','Corn_0.8926_VGG.h5','Grape_0.9293_VGG.h5','Peach_97_VGG.h5','Tomato_0.8675_VGG.h5',
-            'pepper_95.90.h5','potato_90.62.h5','starwberry_99.h5','Sugarcane_0.8356_VGG.h5']
+DISEASE_MODELS = ['Apple_0.9395_VGG.h5','Cherry_0.9873_VGG.h5','Corn_0.8926_VGG.h5','Grape_0.9293_VGG.h5','Peach_97_VGG.h5','Sugarcane_0.8356_VGG.h5',
+            'Tomato_0.8675_VGG.h5','pepper_95.90.h5','potato_90.62.h5','starwberry_99.h5']
+
 
 APPLE = ['Apple___Apple_scab','Apple___Black_rot','Apple___Cedar_apple_rust','Apple___healthy']
 CHERRY = ['Cherry_(including_sour)___Powdery_mildew','Cherry_(including_sour)___healthy']
@@ -25,9 +27,10 @@ SUGERCANE = ['Sugarcane leaf spot', 'Sugarcane aphid', 'Sugarcane coal fouling']
 TOMATO = ['Tomato___Bacterial_spot','Tomato___Early_blight','Tomato___Late_blight','Tomato___Leaf_Mold','Tomato___Septoria_leaf_spot','Tomato___Spider_mites Two-spotted_spider_mite',
         'Tomato___Target_Spot','Tomato___Tomato_Yellow_Leaf_Curl_Virus','Tomato___Tomato_mosaic_virus','Tomato___healthy']
 
+SPECIOUS_MODEL ='VGG_all_100p_94.h5'
 
-
-target_size = (64, 64)
+target_size_disease = (64, 64)
+target_size_specious = (100, 100)
 
 
 def predict(img_path):
@@ -35,24 +38,29 @@ def predict(img_path):
     new_image = image_name+"_marked"+extension
     print(new_image)
     result = subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", img_path])
-    model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', 'ResNet_0.92.h5')
+    model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', SPECIOUS_MODEL)
     model = load_model(model_path)
     img = Image.open(new_image)
-    if img.size != target_size:
-        img = img.resize(target_size)
+    if img.size != target_size_specious:
+        img = img.resize(target_size_specious)
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
-    preds = model.predict(x)
-    print(np.argmax(preds))
+    preds = model.predict(x).flatten()
+    value_ = preds.argsort()
+    value = value_[::-1]
+    print("Plant Species ")
+    for i in value:
+        print("\t - "+str(SPECIES[i])+" : \t"+str(preds[i]))
+    return str(SPECIES[value[0]])
 
 
 def predict_species(img_path):
-    model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', 'VGG_100_0.9497.h5')
+    model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', SPECIOUS_MODEL)
     model = load_model(model_path)
     img = Image.open(img_path)
-    if img.size != target_size:
-        img = img.resize((100,100))
+    if img.size != target_size_specious:
+        img = img.resize(target_size_specious)
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
@@ -75,8 +83,8 @@ def predict_disease(img_path,species):
 
     model = load_model(model_path)
     img = Image.open(img_path)
-    if img.size != target_size:
-        img = img.resize(target_size)
+    if img.size != target_size_disease:
+        img = img.resize(target_size_disease)
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
@@ -123,8 +131,15 @@ def get_class(x):
 
 
 if __name__ == "__main__":
-    parser.add_argument("--image")
+    parser.add_argument("--image",type=str)
+    parser.add_argument("--segment",type=bool,default=False)
     args = parser.parse_args()
-    species = predict_species(args.image)
+    if False ==args.segment:
+        species = predict_species(args.image)
+    else:
+        species = predict(args.image)
+
     predict_disease(args.image,species)
+
+
 

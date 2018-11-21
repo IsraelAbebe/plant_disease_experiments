@@ -51,3 +51,52 @@
 **VGG**
 - fine tuning  - 80%
 - from scratch - 94%
+
+
+
+## we also trained Specious calssification networks and specified disease detection models
+
+**Species**
+- Based On VGG Arctecture 94%
+
+**Apple**
+- Based On VGG Network  93.95%
+
+**Cherry**
+- Based On VGG Network  98.73%
+
+**Corn**
+- Based On VGG Network  89.26%
+
+**Grape**
+- Based On VGG Network  92.93%
+
+**Peach**
+- Based On VGG Network  97%
+
+**Pepper**
+- Based On VGG Network  95.90%
+
+**Potato**
+- Based On VGG Network  90.62%
+
+**Strawberry**
+- Based On VGG Network  99%
+
+**Sugercane**
+- Based On VGG Network  83.56%
+
+**Tomato**
+- Based On VGG Network  86.75%
+
+
+
+
+
+
+
+
+
+
+ 
+

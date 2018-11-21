@@ -32,7 +32,7 @@ target_size_disease = (64, 64)
 target_size_specious = (100, 100)
 
 
-def predict(img_path):
+def predict(img_path,do_print=True):
     image_name,extension=os.path.splitext(img_path)
     new_image = image_name+"_marked"+extension
     print(new_image)
@@ -48,13 +48,16 @@ def predict(img_path):
     preds = model.predict(x).flatten()
     value_ = preds.argsort()
     value = value_[::-1]
-    print("Plant Species ")
-    for i in value:
-        print("\t - "+str(SPECIES[i])+" : \t"+str(preds[i]))
-    return str(SPECIES[value[0]])
+
+    if do_print:
+        print("Plant Species ")
+        for i in value:
+            print("\t - "+str(SPECIES[i])+" : \t"+str(preds[i]))
+
+    return str(SPECIES[value[0]]),new_image
 
 
-def predict_species(img_path):
+def predict_species(img_path,do_print=True):
     model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', SPECIOUS_MODEL)
     model = load_model(model_path)
     img = Image.open(img_path)
@@ -66,18 +69,21 @@ def predict_species(img_path):
     preds = model.predict(x).flatten()
     value_ = preds.argsort()
     value = value_[::-1]
-    print("Plant Species ")
-    for i in value:
-        print("\t - "+str(SPECIES[i])+" : \t"+str(preds[i]))
+
+    if do_print:
+        print("Plant Species ")
+        for i in value:
+            print("\t - "+str(SPECIES[i])+" : \t"+str(preds[i]))
+
     return str(SPECIES[value[0]])
     
 
-def predict_disease(img_path,species):
+def predict_disease(img_path,species,do_print=True):
     try:
         CLASS_ARRAY = get_class(species)
         model_path = os.path.join('Plant_Disease_Detection_Benchmark_models/Models', get_model(species))
     except:
-        print ('NO Disease Found')
+        print ('NO Disease Found For This Species')
         return 0
 
     model = load_model(model_path)
@@ -91,10 +97,12 @@ def predict_disease(img_path,species):
     value_ = preds.argsort()
     value = value_[::-1]
 
-    print("Plant Disease : ")
-    for i in value:
-        print("\t-"+str(CLASS_ARRAY[i])+" : \t"+str(preds[i]))
+    if do_print:
+        print("Plant Disease : ")
+        for i in value:
+            print("\t-"+str(CLASS_ARRAY[i])+" : \t"+str(preds[i]))
 
+    return str(CLASS_ARRAY[value[0]])
 
 
 def get_model(x):
@@ -130,15 +138,28 @@ def get_class(x):
 
 
 if __name__ == "__main__":
-    parser.add_argument("--image",type=str)
-    parser.add_argument("--segment",type=bool,default=False)
+    parser.add_argument("--image",type=str,help='image path')
+    parser.add_argument("--segment",type=bool,default=False,help='add segmentation')
+    parser.add_argument("--species",type=str,default='',help='Specious Name if Known')
     args = parser.parse_args()
-    if False ==args.segment:
-        species = predict_species(args.image)
-    else:
-        species = predict(args.image)
 
-    predict_disease(args.image,species)
+
+    if False ==args.segment and args.species == '':
+        species = predict_species(args.image)
+        predict_disease(args.image,species)
+    elif True == args.segment and args.species == '':
+        species,_ = predict(args.image)
+        predict_disease(args.image,species)
+    elif True == args.segment and args.species != '' :
+        species,image_name = predict(args.image,False)
+        predict_disease(image_name,species)
+    elif False == args.segment and args.species != '' :
+        predict_disease(args.image,species)
+    else:
+        Print("Make Sure Your Command is Correct")
+
+
+    
 
 
 

@@ -1,8 +1,8 @@
 import tensorflow as tf
-from keras.applications.inception_v3 import InceptionV3
-from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D,Dropout
-from keras.layers import Input
+from tensorflow.keras.applications.inception_v3 import InceptionV3
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D,Dropout
+from tensorflow.keras.layers import Input
 
 print('tf version: ', tf.__version__)
 
@@ -27,13 +27,13 @@ def InceptionV3WithCustomLayers(input_shape, nb_classes):
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(FC_SIZE * 2, activation='relu')(x)  # new FC layer, random init
-    x = Dropout(0.5)(x)
+    x = Dropout(0.3)(x)
     # x = Dense(FC_SIZE, activation='relu')(x)  # new FC layer, random init
     # x = Dropout(0.5)(x)
     #x = Dense(FC_SIZE * 4, activation='relu')(x)  # new FC layer, random init
     #x = Dropout(0.5)(x)
     predictions = Dense(nb_classes, activation='softmax')(x)  # new softmax layer
-    model = Model(output=predictions, input=base_model.input)
+    model = Model(outputs=predictions, inputs=base_model.input)
     return model
 
 

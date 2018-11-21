@@ -11,8 +11,6 @@ import sys
 parser = argparse.ArgumentParser()
 
 SPECIES = ['Apple','Bean','Blueberry','Cherry','Corn','Grape','Grapefruit','Orange','Peach','Pepper','Potato','Raspberry','Sorghum','Soybean','Squash','Strawberry','Sugarcane','Tomato']
-# DISEASE_MODELS = ['Apple_0.9395_VGG.h5','Cherry_0.9873_VGG.h5','Corn_0.8926_VGG.h5','Grape_0.9293_VGG.h5','Peach_97_VGG.h5','Sugarcane_0.8356_VGG.h5',
-#             'Tomato_0.8675_VGG.h5','pepper_95.90.h5','potato_90.62.h5','starwberry_99.h5']
 
 
 APPLE = ['Apple___Apple_scab','Apple___Black_rot','Apple___Cedar_apple_rust','Apple___healthy']
@@ -135,20 +133,17 @@ def get_disease_model(x,model='VGG'):
             'Sugarcane':'Sugarcane_0.8356_VGG.h5'
             }[x]
     elif model == 'Inception_v3':
-        '''
-            TO BE CHANGED
-        '''
         return {
-            'Apple':'Apple_0.9395_VGG.h5',
-            'Cherry':'Cherry_0.9873_VGG.h5',
-            'Corn':'Corn_0.8926_VGG.h5',
-            'Grape':'Grape_0.9293_VGG.h5',
-            'Peach':'Peach_97_VGG.h5',
-            'Tomato':'Tomato_0.8675_VGG.h5',
-            'Pepper':'pepper_95.90.h5',
-            'Potato':'potato_90.62.h5',
-            'Strawberry':'starwberry_99.h5',
-            'Sugarcane':'Sugarcane_0.8356_VGG.h5'
+            'Apple':'InceptionV3-scratch_segApple.h5 ',
+            'Cherry':'InceptionV3-scratch_segCherry.h5',
+            'Corn':'InceptionV3-scratch_segCorn.h5 ',
+            'Grape':'InceptionV3-scratch_segGrape.h5 ',
+            'Peach':'InceptionV3-scratch_segPeach.h5 ',
+            'Tomato':'InceptionV3-scratch_segTomato.h5 ',
+            'Pepper':'InceptionV3-scratch_segPepper.h5 ',
+            'Potato':'InceptionV3-scratch_segPotato.h5 ',
+            'Strawberry':'InceptionV3-scratch_segStrawberry.h5 ',
+            'Sugarcane':'InceptionV3-scratch_segSugarcane.h5 '
             }[x]
 
 
@@ -161,10 +156,8 @@ def get_species_model(model='VGG'):
     if model == 'VGG':
         return 'VGG_all_100p_94.h5'
     elif model == 'Inception_v3':
-         '''
-            TO BE CHANGED
-        '''
-        return 'VGG_all_100p_94.h5'
+        target_size_disease = (64, 64)
+        return 'InceptionV3-scratch_segspecies.h5'
 
 
 
@@ -207,8 +200,8 @@ if __name__ == "__main__":
 
     # if segment and species is not known     
     elif True == args.segment and args.species == '':
-        species,_ = predict(args.image,args.model)
-        predict_disease(args.image,species)
+        species,image_name = predict(args.image,args.model)
+        predict_disease(image_name,species)
 
     #if segment and species is given
     elif True == args.segment and args.species != '' :

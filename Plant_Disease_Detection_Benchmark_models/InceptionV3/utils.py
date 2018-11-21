@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, CSVLogger
 from tensorflow.keras.applications.inception_v3 import preprocess_input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import Callback
 
 IM_WIDTH, IM_HEIGHT = 100, 100  # fixed size for InceptionV3
 INPUT_SHAPE = (IM_WIDTH, IM_HEIGHT, 3)
@@ -14,8 +15,8 @@ BATCH_SIZE = 64
 FC_SIZE = 512
 NB_IV3_LAYERS_TO_FREEZE = 172
 
-TRAIN_DIR = "../../../Dataset/segmented_/train"
-VAL_DIR = "../../../Dataset/segmented_/val"
+TRAIN_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/train"    # "../../../Dataset/segmented_/train"
+VAL_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/val"    # "../../../Dataset/segmented_/val"
 
 MODEL_STORE_TEMPLATE = "../Models/InceptionV3-{}.h5"
 MODEL_LOG_TEMPLATE = "{}_iv3_log.csv"
@@ -42,11 +43,13 @@ def train_model(model, plot=False):
 
     callbacks = [
         ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6),
-        EarlyStopping(min_delta=0.001, patience=10),
+        # MonitoringCallback(),
+        # CustomEarlyStopping(min_delta=0.001, patience=10),
+        EarlyStopping(min_delta=0.001, patience=15, verbose=5),
         CSVLogger(CSV_LOG_FILE)
     ]
     history_ft = model.fit_generator(train_generator, epochs=nb_epoch, steps_per_epoch=nb_train_samples // batch_size,
-                                   validation_data=validation_generator, use_multiprocessing=True,
+                                   validation_data=validation_generator,
                                    validation_steps=nb_val_samples // batch_size,
                                    callbacks=callbacks)
 
@@ -83,3 +86,50 @@ def plot_training(history):
     plt.plot(epochs, val_loss, 'r-')
     plt.title('Training and validation loss')
     plt.show()
+
+
+class MonitoringCallback(Callback):
+    def __init__(self):
+        super(MonitoringCallback, self).__init__()
+
+        self.past_val_loss = 0
+
+    def on_epoch_end(self, epoch, logs=None):
+        if logs['val_loss'] is None: 
+            print("Lost val_loss itself...weird")
+            return
+
+        print(
+            "\nLast val_loss difference: {}\n"
+                .format(logs['val_loss'] - self.past_val_loss)
+        ) 
+        self.past_val_loss = logs['val_loss']
+
+
+class CustomEarlyStopping(Callback):
+    def __init__(self, monitor='val_loss', min_delta=0, patience=0):
+        super(CustomEarlyStopping, self).__init__()
+
+        self.monitor = monitor
+        self.min_delta = min_delta
+        self.patience = patience
+        self.last_fezaza_epoch = 0
+        self.last_monitored_value = 0
+
+    def on_epoch_end(self, epoch, logs=None):
+        if logs[self.monitor] is None: 
+            print("Lost {} itself...weird".format(self.monitor))
+            return
+
+        monitored_value_diff = logs[self.monitor] - self.last_monitored_value
+        epoch_diff = epoch - self.last_fezaza_epoch
+
+        if abs(monitored_value_diff) > self.min_delta:
+            self.last_fezaza_epoch = epoch
+            print('\nfezaza epoch updated to ', self.last_fezaza_epoch)
+        
+
+        print('\n{} diff: {}, epoch diff: {}\n'.format(self.monitor, monitored_value_diff, epoch_diff))
+        if epoch_diff >= self.patience:
+            print('Custom early stopping at epoch ', epoch)
+            self.model.stop_training = True

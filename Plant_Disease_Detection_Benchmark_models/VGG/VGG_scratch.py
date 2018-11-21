@@ -65,34 +65,53 @@ train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,zoom_
 test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,zoom_range=2,rotation_range=0.1,horizontal_flip=True)
 
 train_generator = train_datagen.flow_from_directory(train_dir, target_size=(IM_WIDTH, IM_HEIGHT), batch_size=batch_size)
-
 test_generator = test_datagen.flow_from_directory(test_dir, target_size=(IM_WIDTH, IM_HEIGHT), batch_size=batch_size)
 
 model = Sequential()
+
+# Block 1
 model.add(Conv2D(64, (3, 3), input_shape=input_shape, padding='same', activation='relu'))
-# model.add(Dropout(0.3))
-model.add(Conv2D(128, (3, 3), activation='relu', padding='valid'))
+model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-model.add(Conv2D(256, (3, 3), activation='relu', padding='valid'))
-# model.add(Dropout(0.3))
-model.add(Conv2D(256, (3, 3), activation='relu', padding='valid'))
+# Block 2
+model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-model.add(Conv2D(512, (3, 3), activation='relu', padding='valid'))
-# # model.add(Dropout(0.3))
-model.add(Conv2D(512, (3, 3), activation='relu', padding='valid'))
+# Block 3
+model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
-# model.add(Conv2D(1024, (3, 3), activation='relu', padding='valid'))
-# model.add(Dropout(0.75))
-# model.add(Conv2D(1024, (3, 3), activation='relu', padding='valid'))
-# model.add(MaxPooling2D(pool_size=(2, 2)))
+# Block 4
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+# Block 5
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+'''
+    Trained on 4 GPUs for 2–3 weeks       :P
+
+'''
 
 model.add(Flatten())
-model.add(Dense(512, activation='relu'))
-# model.add(Dropout(0.3))
-model.add(Dense(1024, activation='relu'))
+model.add(Dense(4096, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(4096, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(1000, activation='relu'))
+model.add(Dropout(0.5))
 
 model.add(Dense(num_classes, activation='softmax'))
 model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -101,4 +120,4 @@ history_train = model.fit_generator(train_generator, nb_epoch=epochs, steps_per_
                                     class_weight='auto', callbacks=[lr_reducer,early_stopper,csv_logger])
 # plot_training(history_train)
 
-model.save("../Models/100/VGG.h5")
+model.save("../Models/VGG-scratch_segspecies.h5")

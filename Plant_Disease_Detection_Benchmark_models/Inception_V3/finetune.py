@@ -4,8 +4,6 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D,Dropout
 from tensorflow.keras.layers import Input
 
-print('tf version: ', tf.__version__)
-
 try:
     from .utils import train_model, nb_classes, INPUT_SHAPE, FC_SIZE
 except:
@@ -14,7 +12,7 @@ except:
 
 def InceptionV3WithCustomLayers(input_shape, nb_classes):
     """
-    Adding custom final layers on InceptionV3 model with imagenet weights
+    Adding custom final layers on Inception_V3 model with imagenet weights
 
     Args:
       input_shape: input shape of the images

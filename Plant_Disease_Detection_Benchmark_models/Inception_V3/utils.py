@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import glob
 import numpy as np
@@ -34,7 +32,7 @@ def get_cmd_args():
          list of command line arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('model_name', 'A model name to identify model log and storage')
+    parser.add_argument('model_name', help='A model name to identify model log and storage')
     parser.add_argument('--train_dir', default=TRAIN_DIR)
     parser.add_argument('--val_dir', default=VAL_DIR)
     parser.add_argument('--epochs', default=NB_EPOCHS, type=int)

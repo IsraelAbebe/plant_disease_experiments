@@ -34,7 +34,7 @@ class TestSimpleFunctions(unittest.TestCase):
         args = utils.get_cmd_args()
         mock_parser = mock_parser_class.return_value
         # check model_name is mandatory in cmd args
-        mock_parser.add_argument.assert_any_call('model_name', mock.ANY)
+        mock_parser.add_argument.assert_any_call('model_name', help=mock.ANY)
         mock_parser.add_argument.assert_any_call('--batch_size', default=utils.BATCH_SIZE, type=int)
         mock_parser.add_argument.assert_any_call('--epochs', default=utils.NB_EPOCHS, type=int)
         mock_parser.add_argument.assert_any_call('--val_dir', default=utils.VAL_DIR)

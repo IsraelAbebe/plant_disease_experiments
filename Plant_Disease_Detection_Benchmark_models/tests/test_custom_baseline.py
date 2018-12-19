@@ -62,33 +62,34 @@ class TestCustomInceptionV3(unittest.TestCase):
         # check the output tensor is the relu activation output
         self.assertEqual(m_activation.return_value.return_value, output)
 
+    @mock.patch('Inception_V3.custom_baseline.Model')
     @mock.patch('Inception_V3.custom_baseline.Dense')
-    def test_custom_inceptionv3_has_dense_layer_at_last(self, m_dense):
-        nb_classes = 3
-        input_shape = (200, 200, 3)
+    def test_custom_inceptionv3_has_dense_layer(self, m_dense, m_model):
+        custom_baseline.Inceptionv3(self.args.nb_classes, input_shape=utils.INPUT_SHAPE)
+        m_dense.assert_called_once_with(self.args.nb_classes, activation='softmax')
 
-        model = custom_baseline.Inceptionv3(nb_classes, input_shape=input_shape)
-        m_dense.assert_called_once_with(nb_classes, activation='softmax')
-
-        self.assertEqual(model.layers[-1], m_dense.return_value)
-
+    @mock.patch('Inception_V3.custom_baseline.Flatten')
+    @mock.patch('Inception_V3.custom_baseline.GlobalAveragePooling2D')
+    @mock.patch('Inception_V3.custom_baseline.concatenate')
+    @mock.patch('Inception_V3.custom_baseline.MaxPooling2D')
+    @mock.patch('Inception_V3.custom_baseline.AveragePooling2D')
+    @mock.patch('Inception_V3.custom_baseline.conv2d_bn')
     @mock.patch('Inception_V3.custom_baseline.Dense')
     @mock.patch('Inception_V3.custom_baseline.Input')
     @mock.patch('Inception_V3.custom_baseline.Model')
-    def test_model_is_build_with_appropriate_inputs_and_outputs(self, m_model, m_input, m_dense, ):
-        nb_classes = 3
-        input_shape = (200, 200, 3)
-
-        model = custom_baseline.Inceptionv3(nb_classes, input_shape=input_shape)
+    def test_model_is_created_with_appropriate_inputs_and_outputs(
+            self, m_model, m_input, m_dense, _conv2d_bn, _avg, _max, _concat, _glob_avg, _flat
+    ):
+        model = custom_baseline.Inceptionv3(self.args.nb_classes, input_shape=utils.INPUT_SHAPE)
 
         # input tensor is setup correctly
-        m_input.assert_called_once_with(shape=input_shape)
+        m_input.assert_called_once_with(shape=utils.INPUT_SHAPE)
         input = m_input.return_value
 
         # output tensor is from dense layer
         output = m_dense.return_value.return_value
 
-        # check model is built correctly
+        # check model is created correctly
         m_model.assert_called_once_with(inputs=input, outputs=output)
         self.assertEqual(m_model.return_value, model)
 

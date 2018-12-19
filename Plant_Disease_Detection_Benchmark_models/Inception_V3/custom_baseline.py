@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import tensorflow as tf
 from tensorflow.python.keras.layers import GlobalAveragePooling2D
 from tensorflow.python.keras.layers import concatenate
@@ -14,6 +12,8 @@ from tensorflow.python.keras.layers import Input
 
 from tensorflow.python.keras.models import Model
 
+# This try except import is used only to support intellij IDE(pycharm)
+# The except block import is what really works
 try:
     from .utils import train_model, setup_args, INPUT_SHAPE
 except:
@@ -65,10 +65,15 @@ def Inceptionv3(nb_classes, input_tensor=None, input_shape=None):
         keras model of custom inceptionV3 architecture
     """
 
-    if input_tensor is None:
+    if input_tensor is not None:
+        input = input_tensor
+    elif input_shape is not None:
         input = Input(shape=input_shape)
     else:
-        input = input_tensor
+        raise ValueError('Please provide to Inceptionv3 either a `input_shape`'
+                         ' or a `input_tensor` argument. Note that '
+                         '`input_shape` does not include the batch '
+                         'dimension.')
 
     # starting stem of inceptionv3 architecture
     x = conv2d_bn(input, 32, 3, padding='valid', strides=(2, 2))
@@ -161,5 +166,5 @@ def build_baseline_model(args):
 
 if __name__ == "__main__":
     args = setup_args()
-    iv3 = Inceptionv3(args)
+    iv3 = build_baseline_model(args)
     train_model(iv3, args)

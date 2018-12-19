@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from tensorflow.python.keras.applications.inception_v3 import InceptionV3
 from tensorflow.python.keras.layers import Input
 

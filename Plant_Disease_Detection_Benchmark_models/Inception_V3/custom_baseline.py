@@ -9,10 +9,10 @@ from tensorflow.python.keras.layers import Activation
 from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Flatten
 from tensorflow.python.keras.layers import Dense
-from tensorflow.python.keras import Input
+from tensorflow.python.keras.layers import Conv2D
+from tensorflow.python.keras.layers import Input
 
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Conv2D
 
 try:
     from .utils import train_model, setup_args, INPUT_SHAPE
@@ -24,6 +24,17 @@ def conv2d_bn(x, filters, kernel_size, padding='same', strides=(1, 1), name=None
     """
     Apply convolution with batch normalization and relu activation
     This is just helper function since its operation is repetitive
+
+    Args:
+        x: input tensor
+        filters: number of filters used in conv2d layer
+        kernel_size: tuple consisting of width and height of the kernel used in conv2d layer
+        padding: padding mode used in conv2d layer
+        strides: strides used in conv2d layer
+        name: base name used to identify layers if necessary
+
+    Returns:
+        output tensor applied with conv2d, batchnorm and relu activation according with the arguments
     """
 
     if name is not None:
@@ -144,6 +155,8 @@ def build_baseline_model(args):
     """
     model = Inceptionv3(args.nb_classes, input_shape=INPUT_SHAPE)
     model.compile(optimizer='RMSprop', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    return model
 
 
 if __name__ == "__main__":

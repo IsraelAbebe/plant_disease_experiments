@@ -2,8 +2,12 @@ import argparse
 import unittest
 from unittest import mock
 
+import tensorflow as tf
+import numpy as np
+
 from Inception_V3.baseline_scratch import build_baseline_model
 from Inception_V3 import utils
+
 
 class TestInceptionV3(unittest.TestCase):
     @classmethod

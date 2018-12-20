@@ -20,8 +20,19 @@ NB_IV3_LAYERS_TO_FREEZE = 172
 TRAIN_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/train"  # "../../../Dataset/segmented_/train"
 VAL_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/val"  # "../../../Dataset/segmented_/val"
 
-MODEL_STORE_TEMPLATE = "../Models/Inception_V3-{}.h5"
-MODEL_LOG_TEMPLATE = "{}_iv3_log.csv"
+MODEL_STORE_TEMPLATE = "../Models/{}-{}.h5"
+MODEL_LOG_TEMPLATE = "{}_{}_log.csv"
+
+# model type names
+VGG_ARCHITECTURE = 'VGG'
+INCEPTIONV3_ARCHITECTURE = 'InceptionV3'
+SUPPORTED_MODEL_TYPES = {VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE}
+
+AUGMENTATION_KWARGS = {
+    'zoom_range': 2,
+    'rotation_range': 0.1,
+    'horizontal_flip': True
+}
 
 
 def get_cmd_args():
@@ -38,6 +49,7 @@ def get_cmd_args():
     parser.add_argument('--epochs', default=NB_EPOCHS, type=int)
     parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
     parser.add_argument('--layers_to_freeze', default=NB_IV3_LAYERS_TO_FREEZE, type=int)
+    parser.add_argument('--augment', default=False, type=bool)
     args = parser.parse_args()
 
     return args
@@ -58,18 +70,19 @@ def setup_args():
     return args
 
 
-def get_data_generators(args):
+def get_data_generators(args, augment_kwargs):
     """
     Get training data and validation data generators
 
     Args:
         args: necessary arguments containing train_data_dir, val_data_dir, batch_size etc...
+        augment_kwargs: data augmentation specifications dict to be used as kwargs
 
     Returns:
         tuple of training and validation data generators
     """
-    train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-    val_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+    train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input, **augment_kwargs)
+    val_datagen = ImageDataGenerator(preprocessing_function=preprocess_input, **augment_kwargs)
 
     train_data_generator = train_datagen.flow_from_directory(args.train_dir, target_size=(IM_WIDTH, IM_HEIGHT),
                                                              batch_size=args.batch_size)
@@ -79,7 +92,25 @@ def get_data_generators(args):
     return train_data_generator, val_data_generator
 
 
-def train_model(model, args, plot=False):
+def setup_trainable_layers(model, layers_to_freeze=None):
+    """
+    Freeze the bottom layers and make trainable the remaining top layers.
+
+    Args:
+      model: keras model
+      layers_to_freeze: number of layers to freeze or None to use the model as it is
+    """
+    if layers_to_freeze is not None:
+        if not (0 <= layers_to_freeze <= len(model.layers)):
+            raise ValueError('`layers_to_freeze` argument must be between 0 and {}'.format(len(model.layers)))
+
+        for layer in model.layers[:layers_to_freeze]:
+            layer.trainable = False
+        for layer in model.layers[layers_to_freeze:]:
+            layer.trainable = True
+
+
+def train_model(model, args, model_type, plot=False):
     """
     Trains a model, logs on every epoch, saves the model when it finishes
     and plot the training history if required
@@ -87,18 +118,30 @@ def train_model(model, args, plot=False):
     Args:
         model: the model which will be trained
         args: necessary args needed for training like train_data_dir, batch_size etc...
+        model_type: type of the model architecture like VGG, InceptionV3
         plot: whether to plot the training history or not
     """
     print('tf version: ', tf.__version__)
 
+    # check validity of model type to be trained by this function
+    if model_type not in SUPPORTED_MODEL_TYPES:
+        raise ValueError('Unsupported model type `{}` given. Supported model types are: {}'
+                         .format(model_type, SUPPORTED_MODEL_TYPES))
+
+    # augment dataset if required or is VGG model
+    if model_type == VGG_ARCHITECTURE or args.augment:
+        augment_kwargs = AUGMENTATION_KWARGS
+    else:
+        augment_kwargs = {}
+
     identifier = args.model_name
-    csv_log_filename = get_model_log_name(identifier)
+    csv_log_filename = get_model_log_name(model_type, identifier)
 
     nb_train_samples = get_nb_files(args.train_dir)
     nb_val_samples = get_nb_files(args.val_dir)
-    output_model_file = get_model_storage_name(identifier)
+    output_model_file = get_model_storage_name(model_type, identifier)
 
-    train_data_generator, val_data_generator = get_data_generators(args)
+    train_data_generator, val_data_generator = get_data_generators(args, augment_kwargs)
 
     callbacks = [
         ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6),
@@ -108,11 +151,17 @@ def train_model(model, args, plot=False):
         CSVLogger(csv_log_filename)
     ]
 
+    if model_type == VGG_ARCHITECTURE:
+        additional_kwargs = {
+            'class_weight': 'auto'
+        }
+    else:
+        additional_kwargs = {}
     history_ft = model.fit_generator(
         train_data_generator, epochs=args.epochs, callbacks=callbacks,
         steps_per_epoch=nb_train_samples // args.batch_size,
         validation_data=val_data_generator,
-        validation_steps=nb_val_samples // args.batch_size,
+        validation_steps=nb_val_samples // args.batch_size, **additional_kwargs
     )
 
     model.save(output_model_file)
@@ -121,30 +170,32 @@ def train_model(model, args, plot=False):
         plot_training(history_ft)
 
 
-def get_model_storage_name(identifier):
+def get_model_storage_name(model_type, identifier):
     """
     Get storage path used for saving a model
 
     Args:
+        model_type: type of the model architecture like VGG, InceptionV3
         identifier: a partial string that is supposed to make the filename unique from other models
 
     Returns:
         relative filepath used to save the model
     """
-    return MODEL_STORE_TEMPLATE.format(identifier)
+    return MODEL_STORE_TEMPLATE.format(model_type, identifier)
 
 
-def get_model_log_name(identifier):
+def get_model_log_name(model_type, identifier):
     """
     Get filename used to log a model's epochs
 
     Args:
+        model_type: type of the model architecture like VGG, InceptionV3
         identifier:a partial string that is supposed to make the filename unique from other models
 
     Returns:
         filename used to save model's log
     """
-    return MODEL_LOG_TEMPLATE.format(identifier)
+    return MODEL_LOG_TEMPLATE.format(model_type, identifier)
 
 
 def get_nb_files(directory):

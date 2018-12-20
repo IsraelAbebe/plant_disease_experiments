@@ -5,8 +5,9 @@ from unittest import mock
 import tensorflow as tf
 import numpy as np
 
+import Plant_Disease_Detection_Benchmark_models.utils as utils
+
 from Inception_V3.baseline_scratch import build_baseline_model
-from Inception_V3 import utils
 
 
 class TestInceptionV3(unittest.TestCase):

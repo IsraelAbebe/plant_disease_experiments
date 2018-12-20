@@ -5,7 +5,8 @@ from unittest import mock
 import tensorflow as tf
 import numpy as np
 
-from Inception_V3 import utils
+import Plant_Disease_Detection_Benchmark_models.utils as utils
+
 from Inception_V3 import custom_baseline
 from Inception_V3.custom_baseline import build_custom_model
 
@@ -65,7 +66,6 @@ class TestCustomInceptionV3Model(unittest.TestCase):
     def test_custom_inceptionv3_raises_valueError_when_either_input_tensor_or_shape_are_not_provided(self):
         with self.assertRaises(ValueError) as ve:
             custom_baseline.Inceptionv3(self.args.nb_classes)
-
 
     @mock.patch('Inception_V3.custom_baseline.Model')
     @mock.patch('Inception_V3.custom_baseline.Dense')

@@ -1,12 +1,20 @@
 from tensorflow.python.keras.applications.inception_v3 import InceptionV3
 from tensorflow.python.keras.layers import Input
 
+# shameful hack to support running this script with no error
+# it just includes this script parent folder in sys.path(what a shame)
+if __name__ == "__main__" :
+    from sys import path
+    from os.path import dirname as dir
+
+    path.append(dir(path[0]))
+
 # This try except import is used only to support intellij IDE(pycharm)
-# The except block import is what really works
+# The except block import is what really works with the support of the above shameful hack
 try:
-    from .utils import train_model, setup_args, INPUT_SHAPE
+    from Plant_Disease_Detection_Benchmark_models.utils import train_model, setup_args, INPUT_SHAPE, INCEPTIONV3_ARCHITECTURE
 except:
-    from utils import train_model, setup_args, INPUT_SHAPE
+    from utils import train_model, setup_args, INPUT_SHAPE, INCEPTIONV3_ARCHITECTURE
 
 
 def build_baseline_model(args):
@@ -30,4 +38,4 @@ def build_baseline_model(args):
 if __name__ == "__main__":
     args = setup_args()
     iv3 = build_baseline_model(args)
-    train_model(iv3, args)
+    train_model(iv3, args, INCEPTIONV3_ARCHITECTURE)

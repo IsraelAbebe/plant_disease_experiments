@@ -147,7 +147,7 @@ def Inceptionv3(nb_classes, input_tensor=None, input_shape=None):
     return model
 
 
-def build_baseline_model(args):
+def build_custom_model(args):
     """
     Builds a baseline InceptionV3 model from tensorflow implementation
     with no trained weights loaded and including top layers for prediction
@@ -166,5 +166,5 @@ def build_baseline_model(args):
 
 if __name__ == "__main__":
     args = setup_args()
-    iv3 = build_baseline_model(args)
+    iv3 = build_custom_model(args)
     train_model(iv3, args)

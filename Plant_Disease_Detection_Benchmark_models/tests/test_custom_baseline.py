@@ -7,10 +7,10 @@ import numpy as np
 
 from Inception_V3 import utils
 from Inception_V3 import custom_baseline
-from Inception_V3.custom_baseline import build_baseline_model
+from Inception_V3.custom_baseline import build_custom_model
 
 
-class TestCustomInceptionV3(unittest.TestCase):
+class TestCustomInceptionV3Model(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         args = argparse.Namespace()
@@ -19,14 +19,14 @@ class TestCustomInceptionV3(unittest.TestCase):
 
     @mock.patch('Inception_V3.custom_baseline.Inceptionv3')
     def test_InceptionV3_is_created(self, mock_IV3):
-        build_baseline_model(self.args)
+        build_custom_model(self.args)
 
         # check input_tensor shape is set up right
         mock_IV3.assert_called_with(self.args.nb_classes, input_shape=utils.INPUT_SHAPE)
 
     @mock.patch('Inception_V3.custom_baseline.Inceptionv3')
     def test_InceptionV3_is_compiled(self, mock_IV3):
-        build_baseline_model(self.args)
+        build_custom_model(self.args)
 
         self.assertTrue(mock_IV3.return_value.compile.called)
 
@@ -61,6 +61,11 @@ class TestCustomInceptionV3(unittest.TestCase):
 
         # check the output tensor is the relu activation output
         self.assertEqual(m_activation.return_value.return_value, output)
+
+    def test_custom_inceptionv3_raises_valueError_when_either_input_tensor_or_shape_are_not_provided(self):
+        with self.assertRaises(ValueError) as ve:
+            custom_baseline.Inceptionv3(self.args.nb_classes)
+
 
     @mock.patch('Inception_V3.custom_baseline.Model')
     @mock.patch('Inception_V3.custom_baseline.Dense')

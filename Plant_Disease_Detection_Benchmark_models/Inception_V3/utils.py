@@ -37,6 +37,7 @@ def get_cmd_args():
     parser.add_argument('--val_dir', default=VAL_DIR)
     parser.add_argument('--epochs', default=NB_EPOCHS, type=int)
     parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
+    parser.add_argument('--layers_to_freeze', default=NB_IV3_LAYERS_TO_FREEZE, type=int)
     args = parser.parse_args()
 
     return args

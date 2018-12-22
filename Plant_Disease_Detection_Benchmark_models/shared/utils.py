@@ -17,16 +17,22 @@ BATCH_SIZE = 64
 FC_SIZE = 512
 NB_IV3_LAYERS_TO_FREEZE = 172
 
-TRAIN_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/train"  # "../../../Dataset/segmented_/train"
-VAL_DIR = "../../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/val"  # "../../../Dataset/segmented_/val"
+TRAIN_DIR = "../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/train"  # "../../../Dataset/segmented_/train"
+VAL_DIR = "../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/val"  # "../../../Dataset/segmented_/val"
 
-MODEL_STORE_TEMPLATE = "../Models/{}-{}.h5"
-MODEL_LOG_TEMPLATE = "{}_{}_log.csv"
+MODEL_STORE_TEMPLATE = "Models/{}-{}.h5"
+MODEL_LOG_TEMPLATE = "logs/{}_{}_log.csv"
 
 # model type names
-VGG_ARCHITECTURE = 'VGG'
-INCEPTIONV3_ARCHITECTURE = 'InceptionV3'
+VGG_ARCHITECTURE = 'vgg'
+INCEPTIONV3_ARCHITECTURE = 'inceptionv3'
 SUPPORTED_MODEL_TYPES = {VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE}
+
+# mode mode names
+CUSTOM = 'custom'  # custom implementation of the model architecture
+BASELINE = 'baseline'  # standard model implementation from a library with no weights
+FINETUNE = 'finetune'  # finetuned model of standard implementation
+SUPPORTED_MODEL_MODES = {CUSTOM, BASELINE, FINETUNE}
 
 AUGMENTATION_KWARGS = {
     'zoom_range': 2,
@@ -43,13 +49,18 @@ def get_cmd_args():
          list of command line arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('model_name', help='A model name to identify model log and storage')
-    parser.add_argument('--train_dir', default=TRAIN_DIR)
-    parser.add_argument('--val_dir', default=VAL_DIR)
+    parser.add_argument('model_identifier', help='A model name to identify model log and storage')
+    parser.add_argument('model_type', choices=SUPPORTED_MODEL_TYPES, default=INCEPTIONV3_ARCHITECTURE,
+                        help='Type of model to be used')
+    parser.add_argument('model_mode', choices=SUPPORTED_MODEL_MODES, default=FINETUNE,
+                        help='Mode of model implementation to be used')
+    parser.add_argument('--train_dir', default=TRAIN_DIR, help='Directory containing training dataset')
+    parser.add_argument('--val_dir', default=VAL_DIR, help='Directory containing validation dataset')
     parser.add_argument('--epochs', default=NB_EPOCHS, type=int)
     parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
-    parser.add_argument('--layers_to_freeze', default=NB_IV3_LAYERS_TO_FREEZE, type=int)
-    parser.add_argument('--augment', default=False, type=bool)
+    parser.add_argument('--layers_to_freeze', default=0, type=int,
+                        help='Number of layers to freeze when finetuning a model')
+    parser.add_argument('--augment', default=False, type=bool, help='Wheter to appply augmentation or not on dataset')
     args = parser.parse_args()
 
     return args
@@ -110,7 +121,7 @@ def setup_trainable_layers(model, layers_to_freeze=None):
             layer.trainable = True
 
 
-def train_model(model, args, model_type, plot=False):
+def train_model(model, args, plot=False):
     """
     Trains a model, logs on every epoch, saves the model when it finishes
     and plot the training history if required
@@ -118,28 +129,22 @@ def train_model(model, args, model_type, plot=False):
     Args:
         model: the model which will be trained
         args: necessary args needed for training like train_data_dir, batch_size etc...
-        model_type: type of the model architecture like VGG, InceptionV3
         plot: whether to plot the training history or not
     """
     print('tf version: ', tf.__version__)
 
-    # check validity of model type to be trained by this function
-    if model_type not in SUPPORTED_MODEL_TYPES:
-        raise ValueError('Unsupported model type `{}` given. Supported model types are: {}'
-                         .format(model_type, SUPPORTED_MODEL_TYPES))
-
     # augment dataset if required or is VGG model
-    if model_type == VGG_ARCHITECTURE or args.augment:
+    if args.model_type == VGG_ARCHITECTURE or args.augment:
         augment_kwargs = AUGMENTATION_KWARGS
     else:
         augment_kwargs = {}
 
-    identifier = args.model_name
-    csv_log_filename = get_model_log_name(model_type, identifier)
+    identifier = args.model_identifier
+    csv_log_filename = get_model_log_name(args.model_type, identifier)
 
     nb_train_samples = get_nb_files(args.train_dir)
     nb_val_samples = get_nb_files(args.val_dir)
-    output_model_file = get_model_storage_name(model_type, identifier)
+    output_model_file = get_model_storage_name(args.model_type, identifier)
 
     train_data_generator, val_data_generator = get_data_generators(args, augment_kwargs)
 
@@ -151,7 +156,7 @@ def train_model(model, args, model_type, plot=False):
         CSVLogger(csv_log_filename)
     ]
 
-    if model_type == VGG_ARCHITECTURE:
+    if args.model_type == VGG_ARCHITECTURE:
         additional_kwargs = {
             'class_weight': 'auto'
         }

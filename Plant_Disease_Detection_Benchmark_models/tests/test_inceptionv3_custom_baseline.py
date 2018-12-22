@@ -5,7 +5,7 @@ from unittest import mock
 import tensorflow as tf
 import numpy as np
 
-import Plant_Disease_Detection_Benchmark_models.utils as utils
+import shared.utils as utils
 
 from Inception_V3 import custom_baseline
 from Inception_V3.custom_baseline import build_custom_model
@@ -20,14 +20,14 @@ class TestCustomInceptionV3Model(unittest.TestCase):
 
     @mock.patch('Inception_V3.custom_baseline.Inceptionv3')
     def test_InceptionV3_is_created(self, mock_IV3):
-        build_custom_model(self.args)
+        build_custom_model(self.args, utils.INPUT_SHAPE)
 
         # check input_tensor shape is set up right
         mock_IV3.assert_called_with(self.args.nb_classes, input_shape=utils.INPUT_SHAPE)
 
     @mock.patch('Inception_V3.custom_baseline.Inceptionv3')
     def test_InceptionV3_is_compiled(self, mock_IV3):
-        build_custom_model(self.args)
+        build_custom_model(self.args, utils.INPUT_SHAPE)
 
         self.assertTrue(mock_IV3.return_value.compile.called)
 

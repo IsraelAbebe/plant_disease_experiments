@@ -1,21 +1,11 @@
-from tensorflow.python._pywrap_tensorflow_internal import Flatten
+from tensorflow.python.keras.layers import Flatten
 from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Dense, Dropout
 
-# shameful hack to support running this script with no error
-# it just includes this script parent folder in sys.path(what a shame)
-if __name__ == "__main__":
-    from sys import path
-    from os.path import dirname as dir
-
-    path.append(dir(path[0]))
-
-# This try except import is used only to support intellij IDE(pycharm)
-# The except block import is what really works with the support of the above shameful hack
 try:
-    from Plant_Disease_Detection_Benchmark_models.utils import train_model, setup_args, INPUT_SHAPE, VGG_ARCHITECTURE
+    from shared.utils import train_model, setup_args, INPUT_SHAPE, VGG_ARCHITECTURE
 except:
-    from utils import train_model, setup_args, INPUT_SHAPE, VGG_ARCHITECTURE
+    from shared import train_model, setup_args, INPUT_SHAPE, VGG_ARCHITECTURE
 
 
 def VGG(nb_classes, input_shape):
@@ -70,24 +60,19 @@ def VGG(nb_classes, input_shape):
     return model
 
 
-def build_custom_model(args):
+def build_custom_model(args, input_shape):
     """
     Builds a baseline VGG model based on the paper
     with no trained weights loaded
 
     Args:
         args: necessary args needed for training like train_data_dir, batch_size etc...
+        input_shape: shape of input tensor
 
     Returns:
         baseline vgg model
     """
-    model = VGG(args.nb_classes, input_shape=INPUT_SHAPE)
+    model = VGG(args.nb_classes, input_shape=input_shape)
     model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
-
-
-if __name__ == "__main__":
-    args = setup_args()
-    iv3 = build_custom_model(args)
-    train_model(iv3, args, VGG_ARCHITECTURE)

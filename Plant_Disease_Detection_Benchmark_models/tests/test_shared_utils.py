@@ -12,25 +12,43 @@ import shared.utils as utils
 from shared.utils import IM_WIDTH, IM_HEIGHT
 
 
-def setupModule():
-    print('setting up module')
-
-
 class TestSimpleFunctions(unittest.TestCase):
 
     def test_get_model_storage_name(self):
         id = 'xyz'
         model_type = 'InceptionV3'
         found = utils.get_model_storage_name(model_type, id)
-        expected = '../Models/InceptionV3-xyz.h5'
+        expected = os.path.join(utils.MODEL_STORE_FOLDER, 'InceptionV3-xyz.h5')
+        self.assertEqual(found, expected)
+
+    @mock.patch('shared.utils.os.path.isdir', return_value=False)
+    @mock.patch('shared.utils.os.mkdir')
+    def test_get_model_storage_name_will_create_folder_when_needed(self, m_mkdir,m_isdir):
+        id = 'z'
+        model_type = 'xx'
+        found = utils.get_model_storage_name(model_type, id)
+        m_mkdir.assert_called_with(utils.MODEL_STORE_FOLDER)
+        expected = os.path.join(utils.MODEL_STORE_FOLDER, 'xx-z.h5')
         self.assertEqual(found, expected)
 
     def test_get_model_log_name(self):
         id = 'xyz'
         model_type = 'InceptionV3'
         found = utils.get_model_log_name(model_type, id)
-        expected = 'InceptionV3_xyz_log.csv'
+        expected = os.path.join(utils.MODEL_LOG_FOLDER, 'InceptionV3_xyz_log.csv')
         self.assertEqual(found, expected)
+
+    @mock.patch('shared.utils.os.path.isdir', return_value=False)
+    @mock.patch('shared.utils.os.mkdir')
+    def test_get_model_log_name_will_create_folder_when_needed(self, m_mkdir, m_isdir):
+        id = 'z'
+        model_type = 'xx'
+        found = utils.get_model_log_name(model_type, id)
+        m_mkdir.assert_called_with(utils.MODEL_LOG_FOLDER)
+        expected = os.path.join(utils.MODEL_LOG_FOLDER, 'xx_z_log.csv')
+        self.assertEqual(found, expected)
+
+
 
     @mock.patch('shared.utils.argparse.ArgumentParser', autospec=True)
     def test_get_cmd_args(self, mock_parser_class):
@@ -259,7 +277,7 @@ class TestTrainModel(unittest.TestCase):
         cls.val_dir = tempfile.mkdtemp()
 
         args = argparse.Namespace()
-        args.model_name = 'mock_model'
+        args.model_identifier = 'mock_model'
         args.model_type = utils.INCEPTIONV3_ARCHITECTURE
         args.model_type = utils.FINETUNE
         args.train_dir = cls.train_dir

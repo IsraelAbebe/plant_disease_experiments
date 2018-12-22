@@ -20,8 +20,11 @@ NB_IV3_LAYERS_TO_FREEZE = 172
 TRAIN_DIR = "../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/train"  # "../../../Dataset/segmented_/train"
 VAL_DIR = "../../../israels/plant-disease-experiments/Plant_Disease_Detection_Benchmark_models/dataset/segmentedspecies/val"  # "../../../Dataset/segmented_/val"
 
-MODEL_STORE_TEMPLATE = "Models/{}-{}.h5"
-MODEL_LOG_TEMPLATE = "logs/{}_{}_log.csv"
+# model log and storage file details
+MODEL_STORE_TEMPLATE = '{}-{}.h5'
+MODEL_STORE_FOLDER = 'Models'
+MODEL_LOG_TEMPLATE = '{}_{}_log.csv'
+MODEL_LOG_FOLDER = 'logs'
 
 # model type names
 VGG_ARCHITECTURE = 'vgg'
@@ -177,7 +180,7 @@ def train_model(model, args, plot=False):
 
 def get_model_storage_name(model_type, identifier):
     """
-    Get storage path used for saving a model
+    Get storage path used for saving a model and create its folder if required
 
     Args:
         model_type: type of the model architecture like VGG, InceptionV3
@@ -186,12 +189,14 @@ def get_model_storage_name(model_type, identifier):
     Returns:
         relative filepath used to save the model
     """
-    return MODEL_STORE_TEMPLATE.format(model_type, identifier)
+    if not os.path.isdir(MODEL_STORE_FOLDER):
+        os.mkdir(MODEL_STORE_FOLDER)
+    return os.path.join(MODEL_STORE_FOLDER, MODEL_STORE_TEMPLATE).format(model_type, identifier)
 
 
 def get_model_log_name(model_type, identifier):
     """
-    Get filename used to log a model's epochs
+    Get filename used to log a model's epochs and create its folder if required
 
     Args:
         model_type: type of the model architecture like VGG, InceptionV3
@@ -200,7 +205,9 @@ def get_model_log_name(model_type, identifier):
     Returns:
         filename used to save model's log
     """
-    return MODEL_LOG_TEMPLATE.format(model_type, identifier)
+    if not os.path.isdir(MODEL_LOG_FOLDER):
+        os.mkdir(MODEL_LOG_FOLDER)
+    return os.path.join(MODEL_LOG_FOLDER, MODEL_LOG_TEMPLATE).format(model_type, identifier)
 
 
 def get_nb_files(directory):

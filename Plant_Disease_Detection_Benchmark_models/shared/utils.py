@@ -10,7 +10,7 @@ from tensorflow.python.keras.applications.inception_v3 import preprocess_input
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.callbacks import Callback
 
-IM_WIDTH, IM_HEIGHT = 100, 100  # fixed size for Inception_V3
+IM_WIDTH, IM_HEIGHT = 100, 100  # fixed size for Inception_V3, N.B. 64 x 64 image shape was used for ResNet
 INPUT_SHAPE = (IM_WIDTH, IM_HEIGHT, 3)
 NB_EPOCHS = 50
 BATCH_SIZE = 64
@@ -29,7 +29,8 @@ MODEL_LOG_FOLDER = 'logs'
 # model type names
 VGG_ARCHITECTURE = 'vgg'
 INCEPTIONV3_ARCHITECTURE = 'inceptionv3'
-SUPPORTED_MODEL_TYPES = {VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE}
+RESNET_ARCHITECTURE = 'resnet'
+SUPPORTED_MODEL_TYPES = {VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE, RESNET_ARCHITECTURE}
 
 # mode mode names
 CUSTOM = 'custom'  # custom implementation of the model architecture
@@ -151,20 +152,23 @@ def train_model(model, args, plot=False):
 
     train_data_generator, val_data_generator = get_data_generators(args, augment_kwargs)
 
-    callbacks = [
-        ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6),
-        # MonitoringCallback(),
-        # CustomEarlyStopping(min_delta=0.001, patience=10),
-        EarlyStopping(min_delta=0.001, patience=15, verbose=5),
-        CSVLogger(csv_log_filename)
-    ]
+    # set up callbacks to be used for model training
+    callbacks = [ CSVLogger(csv_log_filename) ]
+    if args.model_type != RESNET_ARCHITECTURE:
+        callbacks.extend([
+            ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6),
+            EarlyStopping(min_delta=0.001, patience=15, verbose=5)
+        ])
 
-    if args.model_type == VGG_ARCHITECTURE:
+    # setup additional kwargs if the model needs it
+    if args.model_type in {VGG_ARCHITECTURE, RESNET_ARCHITECTURE}:
         additional_kwargs = {
             'class_weight': 'auto'
         }
     else:
         additional_kwargs = {}
+
+    # train the model using data generator
     history_ft = model.fit_generator(
         train_data_generator, epochs=args.epochs, callbacks=callbacks,
         steps_per_epoch=nb_train_samples // args.batch_size,
@@ -172,8 +176,10 @@ def train_model(model, args, plot=False):
         validation_steps=nb_val_samples // args.batch_size, **additional_kwargs
     )
 
+    # save the model
     model.save(output_model_file)
 
+    # plot history if needed
     if plot:
         plot_training(history_ft)
 

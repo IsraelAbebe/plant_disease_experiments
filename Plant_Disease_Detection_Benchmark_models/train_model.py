@@ -2,6 +2,7 @@ from shared.utils import *
 
 import Inception_V3
 import VGG
+import ResNet
 
 
 def get_model(args, input_shape):
@@ -35,6 +36,17 @@ def get_model(args, input_shape):
             model = VGG.build_custom_model(args, input_shape)
         elif args.model_mode == BASELINE:
             raise NotImplementedError('Baseline mode for VGG architecture is not implemented yet. Choose another mode')
+        else:
+            raise ValueError('Unsuppported model mode `{}` provided: Supported modes are {}'.format(args.model_mode,
+                                                                                                    SUPPORTED_MODEL_MODES))
+    elif args.model_type == RESNET_ARCHITECTURE:
+        if args.model_mode == FINETUNE:
+            raise NotImplementedError('Finetune mode for ResNet architecture is not implemented yet. Choose another mode')
+        elif args.model_mode == CUSTOM:
+            # N.B. originally used input shape was 64 x 64...in case something went wrong with current default input shape provided
+            model = ResNet.build_custom_model(args, input_shape)
+        elif args.model_mode == BASELINE:
+            raise NotImplementedError('Baseline mode for ResNet architecture is not implemented yet. Choose another mode')
         else:
             raise ValueError('Unsuppported model mode `{}` provided: Supported modes are {}'.format(args.model_mode,
                                                                                                     SUPPORTED_MODEL_MODES))

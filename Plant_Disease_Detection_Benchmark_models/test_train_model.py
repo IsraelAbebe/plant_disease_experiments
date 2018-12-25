@@ -25,7 +25,7 @@ class TestGetModel(unittest.TestCase):
         args = argparse.Namespace()
         args.model_name = 'mock_model'
         args.model_type = utils.INCEPTIONV3_ARCHITECTURE
-        args.model_mode = utils.FINETUNE
+        args.model_mode = utils.CUSTOM
         args.nb_classes = 3
         args.batch_size = 12
         args.epochs = 10
@@ -33,11 +33,19 @@ class TestGetModel(unittest.TestCase):
         args.layers_to_freeze = 2
         cls.args = args
 
-        cls.unimplemented_exceptions = {utils.VGG_ARCHITECTURE: utils.BASELINE}
+        cls.unimplemented_exceptions = {
+            utils.VGG_ARCHITECTURE: {utils.BASELINE},
+            utils.RESNET_ARCHITECTURE: {utils.BASELINE, utils.FINETUNE},
+        }
 
     def setUp(self):
         self.args.model_type = utils.INCEPTIONV3_ARCHITECTURE
-        self.args.model_mode = utils.FINETUNE
+        self.args.model_mode = utils.CUSTOM
+
+    def get_unimplemented_modes_for_model_type(self, model_type):
+        """Helper method to get unimplemented mode exceptions for a model type"""
+        model_type_unimplemented_exceptions = self.unimplemented_exceptions.get(model_type)
+        return model_type_unimplemented_exceptions if model_type_unimplemented_exceptions is not None else {}
 
     def test_raises_valueError_when_unsupported_model_type_is_given(self):
         unsupported_model_type = 'xx'
@@ -51,7 +59,7 @@ class TestGetModel(unittest.TestCase):
         try:
             for model_type in utils.SUPPORTED_MODEL_TYPES:
                 self.args.model_type = model_type
-                if not (self.unimplemented_exceptions.get(self.args.model_type) == self.args.model_mode):
+                if self.args.model_mode not in self.get_unimplemented_modes_for_model_type(self.args.model_type):
                     train_model.get_model(self.args, utils.INPUT_SHAPE)
         except ValueError:
             self.fail(
@@ -73,7 +81,9 @@ class TestGetModel(unittest.TestCase):
                 self.args.model_type = supported_mode_type
                 for model_mode in utils.SUPPORTED_MODEL_MODES:
                     self.args.model_mode = model_mode
-                    if not (self.unimplemented_exceptions.get(self.args.model_type) == self.args.model_mode):
+                    model_type_unimplemented_exceptions = self.unimplemented_exceptions.get(self.args.model_type)
+                    if model_type_unimplemented_exceptions is not None \
+                            and self.args.model_mode not in model_type_unimplemented_exceptions:
                         train_model.get_model(self.args, utils.INPUT_SHAPE)
         except ValueError:
             self.fail(
@@ -86,7 +96,7 @@ class TestGetModel(unittest.TestCase):
         self.args.model_type = utils.INCEPTIONV3_ARCHITECTURE
         for supported_mode_type in utils.SUPPORTED_MODEL_MODES:
             self.args.model_mode = supported_mode_type
-            if not (self.unimplemented_exceptions.get(self.args.model_type) == self.args.model_mode):
+            if self.args.model_mode not in self.get_unimplemented_modes_for_model_type(self.args.model_type):
                 train_model.get_model(self.args, utils.INPUT_SHAPE)
                 self.assertTrue(any([m_custom.called, m_baseline.called, m_finetune.called]))
 
@@ -96,9 +106,18 @@ class TestGetModel(unittest.TestCase):
         self.args.model_type = utils.VGG_ARCHITECTURE
         for supported_mode_type in utils.SUPPORTED_MODEL_MODES:
             self.args.model_mode = supported_mode_type
-            if not (self.unimplemented_exceptions.get(self.args.model_type) == self.args.model_mode):
+            if self.args.model_mode not in self.get_unimplemented_modes_for_model_type(self.args.model_type):
                 train_model.get_model(self.args, utils.INPUT_SHAPE)
                 self.assertTrue(any([m_custom.called, m_finetune.called]))
+
+    @mock.patch('train_model.ResNet.build_custom_model')
+    def test_resnet_architecture_module_is_used_for_resnet(self, m_custom):
+        self.args.model_type = utils.RESNET_ARCHITECTURE
+        for supported_mode_type in utils.SUPPORTED_MODEL_MODES:
+            self.args.model_mode = supported_mode_type
+            if self.args.model_mode not in self.get_unimplemented_modes_for_model_type(self.args.model_type):
+                train_model.get_model(self.args, utils.INPUT_SHAPE)
+                self.assertTrue(any([m_custom.called]))
 
 
 if __name__ == '__main__':

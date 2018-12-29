@@ -54,12 +54,14 @@ class TestSimpleFunctions(unittest.TestCase):
     def test_get_cmd_args(self, mock_parser_class):
         args = utils.get_cmd_args()
         mock_parser = mock_parser_class.return_value
-        # check model_name is mandatory in cmd args
+        # check model_name, model_type and model_mode is mandatory in cmd args
         mock_parser.add_argument.assert_any_call('model_identifier', help=mock.ANY)
         mock_parser.add_argument.assert_any_call('model_type', choices=utils.SUPPORTED_MODEL_TYPES, default=mock.ANY,
                                                  help=mock.ANY)
         mock_parser.add_argument.assert_any_call('model_mode', choices=utils.SUPPORTED_MODEL_MODES, default=mock.ANY,
                                                  help=mock.ANY)
+
+        # check for optional cmd args
         mock_parser.add_argument.assert_any_call('--train_dir', default=utils.TRAIN_DIR, help=mock.ANY)
         mock_parser.add_argument.assert_any_call('--val_dir', default=utils.VAL_DIR, help=mock.ANY)
         mock_parser.add_argument.assert_any_call('--batch_size', default=utils.BATCH_SIZE, type=int)

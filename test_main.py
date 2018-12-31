@@ -1,3 +1,7 @@
+import io
+import os
+import random
+import sys
 import unittest
 from unittest import mock
 
@@ -12,7 +16,7 @@ class TestMain(unittest.TestCase):
     def setUpClass(cls):
         cls.unsupported_model_type = 'xx'
         cls.unsupported_species = 'xx'
-        cls.supported_species = main.APPLE
+        cls.supported_species = next(iter(main.SUPPORTED_SPECIES))
 
         if cls.supported_species not in main.SUPPORTED_SPECIES:
             raise ValueError("supported species is not setup right in unit test\n"
@@ -80,7 +84,6 @@ class TestMain(unittest.TestCase):
                     self.fail("`{}` species should be supported but it is not".format(supported_species))
 
 
-
 class TestGetPredictions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -126,7 +129,6 @@ class TestGetPredictions(unittest.TestCase):
     @mock.patch('main.os.path')
     def test_get_predictions_loads_image_appropriately(self, mock_path, _load, _Image, _image, _np):
         mock_path.exists.return_value = True
-        img_target_size = (5, 5)
         _Image.open.return_value = np.zeros((6, 6))
 
         main.get_predictions(self.model_path, self.img_path, self.target_size)
@@ -155,15 +157,205 @@ class TestGetPredictions(unittest.TestCase):
     @mock.patch('main.Image')
     @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_returns_right_preds_and_its_sorting_index(self, mock_path, _load, _Image, _image, _np, _preprocess):
+    def test_get_predictions_returns_right_preds_and_its_sorting_index(self, mock_path, _load, _Image, _image, _np,
+                                                                       _preprocess):
         mock_path.exists.return_value = True
-        expected_preds = np.array([2,3,1])
+        expected_preds = np.array([2, 3, 1])
         _load.return_value.predict.return_value.flatten.return_value = expected_preds
         preds, sorrting_index = main.get_predictions(self.model_path, self.img_path, self.target_size)
 
         expected_sorting_index = np.array([1, 0, 2])
         np.testing.assert_array_equal(preds, expected_preds)
         np.testing.assert_array_equal(sorrting_index, expected_sorting_index)
+
+
+class TestPipelines(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.supported_species = next(iter(main.SUPPORTED_SPECIES))
+        cls.unsupported_species = 'xx'
+        cls.species_model = 'apple.h5'
+        cls.disease_model = 'healthy.h5'
+        cls.model_path = 'model_path'
+        cls.img_path = 'img_path.jpg'
+        cls.segmented_img_path = 'img_path_marked.jpg'
+        cls.target_size = (5, 5)
+        cls.preds = np.array([2, 3, 1])
+        cls.sorting_index = np.array([1, 0, 2])
+
+        random.seed(0)
+
+        if cls.unsupported_species in main.SUPPORTED_SPECIES:
+            raise ValueError("unsupported species is not setup right in unit test\n"
+                             "Please, Write unit test condition again with appropriate unsupported species")
+
+        if len(cls.sorting_index) > len(main.APPLE_CLASSES):
+            raise ValueError("used species classes and sorting index length is not compatible\n"
+                             "Please, Write unit test condition again with appropriate length")
+
+        if len(cls.sorting_index) != len(cls.preds):
+            raise ValueError("preds and sorting index should be equal length since sorting index sorts preds\n"
+                             "Please, Write unit test condition again with appropriate length and items")
+
+    def setUp(self):
+        self.old_stdout = sys.stdout
+
+    def tearDown(self):
+        # restore stdout to console
+        sys.stdout = self.old_stdout
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    @mock.patch('main.subprocess')
+    def test_segment_and_predict_species_image_is_segmented(self, _subprocess, _get_species_model, _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+
+        main.segment_and_predict_species(self.img_path, False)
+
+        _subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", self.img_path])
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    @mock.patch('main.subprocess')
+    def test_segment_and_predict_species_loads_correct_model_and_segmented_image_with_right_size(self, _subprocess,
+                                                                                                 _get_species_model,
+                                                                                                 _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        model_path = os.path.join(main.MODEL_STORAGE_BASE, self.species_model)
+
+        main.segment_and_predict_species(self.img_path, False)
+
+        _get_predictions.assert_called_once_with(model_path, self.segmented_img_path, main.TARGET_SIZE_SPECIES)
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    @mock.patch('main.subprocess')
+    def test_segment_and_predict_species_returns_what_is_expected(self, _subprocess, _get_species_model,
+                                                                  _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+
+        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, False)
+
+        self.assertEqual(top_species, main.SPECIES[self.sorting_index[0]])
+        self.assertEqual(segmented_image_name, self.segmented_img_path)
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    @mock.patch('main.subprocess')
+    def test_segment_and_predict_species_prints_the_right_thing(self, _subprocess, _get_species_model,
+                                                                _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        out_string = io.StringIO()
+        sys.stdout = out_string
+
+        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, do_print=True)
+
+        # check one random item from a list of printed results
+        random_i = random.choice(self.sorting_index)
+        printed_content = out_string.getvalue()
+        self.assertIn(str(main.SPECIES[random_i]), printed_content)
+        self.assertIn(str(self.preds[random_i]), printed_content)
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    def test_predict_species_loads_correct_model_and_image_with_right_size(self, _get_species_model,
+                                                                           _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        model_path = os.path.join(main.MODEL_STORAGE_BASE, self.species_model)
+
+        main.predict_species(self.img_path, False)
+
+        _get_predictions.assert_called_once_with(model_path, self.img_path, main.TARGET_SIZE_SPECIES)
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    def test_predict_species_returns_what_is_expected(self, _get_species_model,
+                                                      _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+
+        top_species = main.predict_species(self.img_path, False)
+
+        self.assertEqual(top_species, main.SPECIES[self.sorting_index[0]])
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_species_model')
+    def test_predict_species_returns_prints_the_right_thing(self, _get_species_model,
+                                                            _get_predictions):
+        _get_species_model.return_value = self.species_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        out_string = io.StringIO()
+        sys.stdout = out_string
+
+        main.predict_species(self.img_path, True)
+
+        # check one random item from a list of printed results
+        random_i = random.choice(self.sorting_index)
+        printed_content = out_string.getvalue()
+        self.assertIn(str(main.SPECIES[random_i]), printed_content)
+        self.assertIn(str(self.preds[random_i]), printed_content)
+
+    @mock.patch('main.get_predictions')
+    @mock.patch('main.get_disease_model')
+    def test_predict_disease_loads_correct_model_and_image_with_right_size(self, _get_disease_model, _get_predictions):
+        _get_disease_model.return_value = self.disease_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        model_path = os.path.join(main.MODEL_STORAGE_BASE, self.disease_model)
+
+        main.predict_disease(self.img_path, self.supported_species, False)
+
+        _get_predictions.assert_called_once_with(model_path, self.img_path, main.TARGET_SIZE_DISEASE)
+
+    @mock.patch('main.get_classes')
+    @mock.patch('main.get_disease_model')
+    @mock.patch('main.get_predictions')
+    def test_predict_disease_uses_appropriate_species_class_and_returns_proper_element_from_it(self, _get_predictions,
+                                                                                               _get_disease_model,
+                                                                                               _get_classes):
+        _get_disease_model.return_value = self.disease_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        _get_classes.return_value = main.APPLE_CLASSES
+
+        top_disease = main.predict_disease(self.img_path, self.supported_species, False)
+
+        _get_classes.assert_called_once_with(self.supported_species)
+        self.assertEqual(top_disease, main.APPLE_CLASSES[self.sorting_index[0]])
+
+    @mock.patch('main.get_classes')
+    @mock.patch('main.get_disease_model')
+    @mock.patch('main.get_predictions')
+    def test_predict_disease_prints_the_right_thing(self, _get_predictions, _get_disease_model, _get_classes):
+        _get_disease_model.return_value = self.disease_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        _get_classes.return_value = main.APPLE_CLASSES
+        out_string = io.StringIO()
+        sys.stdout = out_string
+
+        main.predict_disease(self.img_path, self.supported_species, True)
+
+        # check one random item from a list of printed results
+        random_i = random.choice(self.sorting_index)
+        printed_content = out_string.getvalue()
+        self.assertIn(str(main.APPLE_CLASSES[random_i]), printed_content)
+        self.assertIn(str(self.preds[random_i]), printed_content)
+
+    @mock.patch('main.get_classes')
+    @mock.patch('main.get_disease_model')
+    @mock.patch('main.get_predictions')
+    def test_predict_disease_raises_error_if_unsupported_species_is_given(self, _get_predictions,
+                                                                          _get_disease_model,
+                                                                          _get_classes):
+        _get_disease_model.return_value = self.disease_model
+        _get_predictions.return_value = self.preds, self.sorting_index
+        _get_classes.return_value = main.APPLE_CLASSES
+
+        with self.assertRaises(ValueError) as ve:
+            main.predict_disease(self.img_path, self.unsupported_species, False)
 
 
 if __name__ == '__main__':

@@ -203,7 +203,7 @@ def get_predictions(model_path, img_path, img_target_size):
     return preds, sorted_preds_index
 
 
-def predict_after_segmentation(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
+def segment_and_predict_species(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
     """
     Given image path, first segment the image and predict species on the segmented image
 
@@ -215,7 +215,7 @@ def predict_after_segmentation(img_path, do_print=True, model_type=VGG_ARCHITECT
     Returns:
         a tuple of:
             1. the top one predicted species
-            2. read image in PIL image form
+            2. segmented image path
     """
     image_name, extension = os.path.splitext(img_path)
     segmented_image_name = image_name + "_marked" + extension  # the future segmented image name to be
@@ -226,7 +226,7 @@ def predict_after_segmentation(img_path, do_print=True, model_type=VGG_ARCHITECT
     preds, sorted_preds_index = get_predictions(model_path, segmented_image_name, TARGET_SIZE_SPECIES)
 
     if do_print:
-        print("Plant Species ")
+        print("Plant Species :")
         for i in sorted_preds_index:
             print("\t - " + str(SPECIES[i]) + " : \t" + str(preds[i]))
 
@@ -251,7 +251,7 @@ def predict_species(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
     preds, sorted_preds_index = get_predictions(model_path, img_path, TARGET_SIZE_SPECIES)
 
     if do_print:
-        print("Plant Species ")
+        print("Plant Species :")
         for i in sorted_preds_index:
             print("\t - " + str(SPECIES[i]) + " : \t" + str(preds[i]))
 
@@ -316,12 +316,12 @@ if __name__ == "__main__":
 
     # if segment and species is not known     
     elif args.segment == True and args.species == '':
-        species, image_name = predict_after_segmentation(args.image, args.model_type)
+        species, image_name = segment_and_predict_species(args.image, args.model_type)
         predict_disease(image_name, species)
 
     # if segment and species is given
     elif args.segment == True and args.species != '':
-        species, image_name = predict_after_segmentation(args.image, False, args.model_type)
+        species, image_name = segment_and_predict_species(args.image, False, args.model_type)
         predict_disease(image_name, species, args.model_type)
 
     # if not segment and species is given

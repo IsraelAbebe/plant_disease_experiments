@@ -172,7 +172,7 @@ class TestGetPredictions(unittest.TestCase):
 class TestPipelines(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.supported_species = next(iter(main.SUPPORTED_SPECIES))
+        cls.supported_species = main.APPLE
         cls.unsupported_species = 'xx'
         cls.species_model = 'apple.h5'
         cls.disease_model = 'healthy.h5'
@@ -188,6 +188,10 @@ class TestPipelines(unittest.TestCase):
         if cls.unsupported_species in main.SUPPORTED_SPECIES:
             raise ValueError("unsupported species is not setup right in unit test\n"
                              "Please, Write unit test condition again with appropriate unsupported species")
+
+        if cls.supported_species not in main.SUPPORTED_SPECIES:
+            raise ValueError("supported species is not setup right in unit test\n"
+                             "Please, Write unit test condition again with appropriate supported species")
 
         if len(cls.sorting_index) > len(main.APPLE_CLASSES):
             raise ValueError("used species classes and sorting index length is not compatible\n"

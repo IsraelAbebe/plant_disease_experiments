@@ -1,6 +1,6 @@
-from tensorflow.python.keras.layers import Flatten
-from tensorflow.python.keras import Sequential
-from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Dense, Dropout
+from keras.layers import Flatten
+from keras import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout
 
 try:
     from shared.utils import train_model, setup_args, INPUT_SHAPE, VGG_ARCHITECTURE

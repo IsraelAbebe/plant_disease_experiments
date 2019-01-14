@@ -203,7 +203,7 @@ def get_predictions(model_path, img_path, img_target_size):
     return preds, sorted_preds_index
 
 
-def segment_and_predict_species(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
+def segment_and_predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given image path, first segment the image and predict species on the segmented image
 
@@ -233,7 +233,7 @@ def segment_and_predict_species(img_path, do_print=True, model_type=VGG_ARCHITEC
     return str(SPECIES[sorted_preds_index[0]]), segmented_image_name
 
 
-def predict_species(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
+def predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given an image path, predict the species on the raw image without segmenting
 
@@ -258,7 +258,7 @@ def predict_species(img_path, do_print=True, model_type=VGG_ARCHITECTURE):
     return str(SPECIES[sorted_preds_index[0]])
 
 
-def predict_disease(img_path, species, do_print=True, model_type=VGG_ARCHITECTURE):
+def predict_disease(img_path, species, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given an image path and species of the image, predict the disease on the raw image without segmenting
 
@@ -297,7 +297,7 @@ def get_cmd_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("image", type=str, help='image path')
-    parser.add_argument('--model_type', default=VGG_ARCHITECTURE, choices=[VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE],
+    parser.add_argument('--model', default=VGG_ARCHITECTURE, choices=[VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE],
                         help='Type of model')
     parser.add_argument("--segment", type=bool, default=False, help='add segmentation')
     parser.add_argument("--species", type=str, default='', help='Species Name if known')
@@ -311,22 +311,22 @@ if __name__ == "__main__":
 
     # if not segment and species is not known
     if args.segment == False and args.species == '':
-        species = predict_species(args.image, args.model_type)
-        predict_disease(args.image, species, args.model_type)
+        species = predict_species(args.image, args.model)
+        predict_disease(args.image, species, args.model)
 
-    # if segment and species is not known     
+    # if not segment and species is given
+    elif args.segment == False and args.species != '':
+        predict_disease(args.image, args.species, args.model)
+
+    # if segment and species is not known
     elif args.segment == True and args.species == '':
-        species, image_name = segment_and_predict_species(args.image, args.model_type)
+        species, image_name = segment_and_predict_species(args.image, args.model)
         predict_disease(image_name, species)
 
     # if segment and species is given
     elif args.segment == True and args.species != '':
-        species, image_name = segment_and_predict_species(args.image, False, args.model_type)
-        predict_disease(image_name, species, args.model_type)
-
-    # if not segment and species is given
-    elif args.segment == False and args.species != '':
-        predict_disease(args.image, args.species, args.model_type)
+        species, image_name = segment_and_predict_species(args.image, False, args.model)
+        predict_disease(image_name, species, args.model)
 
     # should not enter here
     else:

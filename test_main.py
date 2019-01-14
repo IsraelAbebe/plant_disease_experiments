@@ -39,7 +39,7 @@ class TestMain(unittest.TestCase):
         mock_parser.add_argument.assert_any_call('image', type=str, help=mock.ANY)
 
         # check for optional cmd args
-        mock_parser.add_argument.assert_any_call('--model_type', default=VGG_ARCHITECTURE,
+        mock_parser.add_argument.assert_any_call('--model', default=VGG_ARCHITECTURE,
                                                  choices=[VGG_ARCHITECTURE, main.INCEPTIONV3_ARCHITECTURE],
                                                  help=mock.ANY)
         mock_parser.add_argument.assert_any_call('--segment', type=bool, default=False, help=mock.ANY)

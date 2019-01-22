@@ -16,13 +16,13 @@ class TestMain(unittest.TestCase):
     def setUpClass(cls):
         cls.unsupported_model_type = 'xx'
         cls.unsupported_species = 'xx'
-        cls.supported_species = next(iter(main.SUPPORTED_SPECIES))
+        cls.supported_species = next(iter(main.DISEASE_SUPPORTED_SPECIES))
 
-        if cls.supported_species not in main.SUPPORTED_SPECIES:
+        if cls.supported_species not in main.DISEASE_SUPPORTED_SPECIES:
             raise ValueError("supported species is not setup right in unit test\n"
                              "Please, Write unit test condition again with appropriate supported species")
 
-        if cls.unsupported_species in main.SUPPORTED_SPECIES:
+        if cls.unsupported_species in main.DISEASE_SUPPORTED_SPECIES:
             raise ValueError("unsupported species is not setup right in unit test\n"
                              "Please, Write unit test condition again with appropriate unsupported species")
 
@@ -77,7 +77,7 @@ class TestMain(unittest.TestCase):
 
     def test_get_disease_model_doesnot_raise_if_supported_species_is_given(self):
         for supported_model_type in main.SUPPORTED_MODEL_TYPES:
-            for supported_species in main.SUPPORTED_SPECIES:
+            for supported_species in main.DISEASE_SUPPORTED_SPECIES:
                 try:
                     main.get_disease_model(supported_species, supported_model_type)
                 except ValueError:
@@ -91,12 +91,12 @@ class TestGetPredictions(unittest.TestCase):
         cls.img_path = 'img_path'
         cls.target_size = (5, 5)
 
+    @mock.patch('main._image')
+    @mock.patch('main._load_model')
     @mock.patch('main.np')
-    @mock.patch('main.image')
     @mock.patch('main.Image')
-    @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_raises_error_if_model_file_doesnot_exist_only(self, mock_path, _load, _Image, _image, _np):
+    def test_get_predictions_raises_error_if_model_file_doesnot_exist_only(self,  mock_path, _Image, _np, _load, _image):
         # if model path exist, valueerror should not be raised
         mock_path.exists.return_value = True
         try:
@@ -109,12 +109,12 @@ class TestGetPredictions(unittest.TestCase):
         with self.assertRaises(ValueError) as ve:
             main.get_predictions('dummy_path', 'dummy_path', self.target_size)
 
+    @mock.patch('main._image')
+    @mock.patch('main._load_model')
     @mock.patch('main.np')
-    @mock.patch('main.image')
     @mock.patch('main.Image')
-    @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_uses_model_appropriately(self, mock_path, _load, _Image, _image, _np):
+    def test_get_predictions_uses_model_appropriately(self, mock_path, _Image, _np, _load, _image):
         mock_path.exists.return_value = True
         main.get_predictions(self.model_path, self.img_path, self.target_size)
 
@@ -122,42 +122,42 @@ class TestGetPredictions(unittest.TestCase):
 
         _load.return_value.predict.assert_called_once()
 
+    @mock.patch('main._image')
+    @mock.patch('main._load_model')
     @mock.patch('main.np')
-    @mock.patch('main.image')
     @mock.patch('main.Image')
-    @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_loads_image_appropriately(self, mock_path, _load, _Image, _image, _np):
+    def test_get_predictions_loads_image_appropriately(self, mock_path, _Image, _np, _load, _image):
         mock_path.exists.return_value = True
-        _Image.open.return_value = np.zeros((6, 6))
+        _Image.open.return_value.size = (6, 6)
 
         main.get_predictions(self.model_path, self.img_path, self.target_size)
 
         _Image.open.assert_called_once_with(self.img_path)
-        _np.resize.assert_called_once_with(_Image.open.return_value, self.target_size)
+        _Image.open.return_value.resize.assert_called_once_with(self.target_size)
 
-        _image.img_to_array.assert_called_once_with(_np.resize.return_value)
+        _image.img_to_array.assert_called_once_with(_Image.open.return_value.resize.return_value)
 
-    @mock.patch('main.preprocess_input')
+    @mock.patch('main._preprocess_input')
+    @mock.patch('main._image')
+    @mock.patch('main._load_model')
     @mock.patch('main.np')
-    @mock.patch('main.image')
     @mock.patch('main.Image')
-    @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_input_is_preprocessed(self, mock_path, _load, _Image, _image, _np, _preprocess):
+    def test_get_predictions_input_is_preprocessed(self, mock_path, _Image, _np, _load, _image, _preprocess):
         mock_path.exists.return_value = True
         main.get_predictions(self.model_path, self.img_path, self.target_size)
 
         _preprocess.assert_called_once_with(_np.expand_dims.return_value)
         _load.return_value.predict.assert_called_once_with(_preprocess.return_value)
 
-    @mock.patch('main.preprocess_input')
+    @mock.patch('main._preprocess_input')
+    @mock.patch('main._image')
+    @mock.patch('main._load_model')
     @mock.patch('main.np')
-    @mock.patch('main.image')
     @mock.patch('main.Image')
-    @mock.patch('main.load_model')
     @mock.patch('main.os.path')
-    def test_get_predictions_returns_right_preds_and_its_sorting_index(self, mock_path, _load, _Image, _image, _np,
+    def test_get_predictions_returns_right_preds_and_its_sorting_index(self, mock_path, _Image, _np, _load, _image,
                                                                        _preprocess):
         mock_path.exists.return_value = True
         expected_preds = np.array([2, 3, 1])
@@ -185,11 +185,11 @@ class TestPipelines(unittest.TestCase):
 
         random.seed(0)
 
-        if cls.unsupported_species in main.SUPPORTED_SPECIES:
+        if cls.unsupported_species in main.DISEASE_SUPPORTED_SPECIES:
             raise ValueError("unsupported species is not setup right in unit test\n"
                              "Please, Write unit test condition again with appropriate unsupported species")
 
-        if cls.supported_species not in main.SUPPORTED_SPECIES:
+        if cls.supported_species not in main.DISEASE_SUPPORTED_SPECIES:
             raise ValueError("supported species is not setup right in unit test\n"
                              "Please, Write unit test condition again with appropriate supported species")
 

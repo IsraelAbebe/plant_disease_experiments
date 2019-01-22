@@ -4,9 +4,18 @@ import subprocess
 import numpy as np
 
 from PIL import Image
+
 from keras.models import load_model
 from keras.preprocessing import image
 from keras.applications.inception_v3 import preprocess_input
+
+# Since a model trained by tensorflow.keras and keras implementation is not compatible to be used by
+# each other awkwardly, these global variables will be set to appropriate package modules based on the model type used
+# i.e   - VGG models trained with         : keras package implementation
+#       - InceptionV3 models trained with : tensorflow.keras package implementation
+_load_model = load_model
+_image = image
+_preprocess_input = preprocess_input
 
 # species names
 APPLE = 'apple'
@@ -31,7 +40,7 @@ TOMATO = 'tomato'
 # all species and supported species names
 SPECIES = [APPLE, BEAN, BLUEBERRY, CHERRY, CORN, GRAPE, GRAPEFRUIT, ORANGE, PEACH,
            PEPPER, POTATO, RASPBERRY, SORGHUM, SOYBEAN, SQUASH, STRAWBERRY, SUGARCANE, TOMATO]
-SUPPORTED_SPECIES = {APPLE, CHERRY, CORN, GRAPE, PEACH, PEPPER, POTATO, STRAWBERRY, SUGARCANE, TOMATO, }
+DISEASE_SUPPORTED_SPECIES = {APPLE, CHERRY, CORN, GRAPE, PEACH, PEPPER, POTATO, STRAWBERRY, SUGARCANE, TOMATO, }
 
 # classes for each species
 APPLE_CLASSES = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy']
@@ -65,7 +74,7 @@ PLANT_CLASSES = {
 }
 
 # image target sizes
-TARGET_SIZE_DISEASE = (64, 64)
+TARGET_SIZE_DISEASE = (100, 100)
 TARGET_SIZE_SPECIES = (100, 100)
 
 # types of models to be used for predictions
@@ -89,20 +98,44 @@ VGG_MODELS = {
 
 # inceptionv3 models to be used with their species name as key
 INCEPTIONV3_MODELS = {
-    APPLE: 'InceptionV3-scratch_segApple.h5 ',
+    APPLE: 'InceptionV3-scratch_segApple.h5',
     CHERRY: 'InceptionV3-scratch_segCherry.h5',
-    CORN: 'InceptionV3-scratch_segCorn.h5 ',
-    GRAPE: 'InceptionV3-scratch_segGrape.h5 ',
-    PEACH: 'InceptionV3-scratch_segPeach.h5 ',
-    TOMATO: 'InceptionV3-scratch_segTomato.h5 ',
-    PEPPER: 'InceptionV3-scratch_segPepper.h5 ',
-    POTATO: 'InceptionV3-scratch_segPotato.h5 ',
-    STRAWBERRY: 'InceptionV3-scratch_segStrawberry.h5 ',
-    SUGARCANE: 'InceptionV3-scratch_segSugarcane.h5 '
+    CORN: 'InceptionV3-scratch_segCorn.h5',
+    GRAPE: 'InceptionV3-scratch_segGrape.h5',
+    PEACH: 'InceptionV3-scratch_segPeach.h5',
+    TOMATO: 'InceptionV3-scratch_segTomato.h5',
+    PEPPER: 'InceptionV3-scratch_segPepper.h5',
+    POTATO: 'InceptionV3-scratch_segPotato.h5',
+    STRAWBERRY: 'InceptionV3-scratch_segStrawberry.h5',
+    SUGARCANE: 'InceptionV3-scratch_segSugarcane.h5'
 }
 
 # base path from where models will be loaded
 MODEL_STORAGE_BASE = 'Plant_Disease_Detection_Benchmark_models/Models'
+
+
+def setup_inceptionv3_modules(model_type):
+    """
+    Since a model trained by tensorflow.keras and keras implementation is not compatible to be used by
+    each other awkwardly, this function will load and set appropriate modules based on the model type used
+    i.e - use tensorflow.python.keras package when using inceptionv3 model
+        - use keras package when using vgg model
+
+    Args:
+        model_type: type of model architecture i.e inceptionv3, vgg, ...
+    """
+    global _load_model
+    global _image
+    global _preprocess_input
+
+    if model_type == INCEPTIONV3_ARCHITECTURE:
+        from tensorflow.python.keras.models import load_model
+        from tensorflow.python.keras.preprocessing import image
+        from tensorflow.python.keras.applications.inception_v3 import preprocess_input
+
+        _load_model = load_model
+        _image = image
+        _preprocess_input = preprocess_input
 
 
 def get_classes(species_name):
@@ -129,9 +162,9 @@ def get_disease_model(species, model_type):
     Returns:
         disease classifier model file name
     """
-    if species not in SUPPORTED_SPECIES:
-        raise ValueError("No such `{}` species is supported.\n"
-                         "Supported species are {}".format(species, SUPPORTED_SPECIES))
+    if species not in DISEASE_SUPPORTED_SPECIES:
+        raise ValueError("`{}` species has no disease model yet.\n"
+                         "Species tha have disease models are {}".format(species, DISEASE_SUPPORTED_SPECIES))
 
     if model_type == VGG_ARCHITECTURE:
         return VGG_MODELS[species]
@@ -182,19 +215,24 @@ def get_predictions(model_path, img_path, img_target_size):
         raise ValueError('No such `{}` file found\n'
                          'Please, checkout the readme of the project '
                          'on github and download required models'.format(model_path))
-    model = load_model(model_path)
+    model = _load_model(model_path)
 
     # get image as array and resize it if necessary
-    img = Image.open(img_path)
-    if img.size != img_target_size:
-        img = np.resize(img, img_target_size)
-    x = image.img_to_array(img)
+    pil_img = Image.open(img_path)
+    if pil_img.size != img_target_size:
+        pil_img = pil_img.resize(img_target_size)
+
+    img = _image.img_to_array(pil_img)
+
+    # if alpha channel found, discard it
+    if img.shape[2] == 4:
+        img = img[:, :, :3]
 
     # preprocess image
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
+    img = np.expand_dims(img, axis=0)
+    img = _preprocess_input(img)
 
-    preds = model.predict(x).flatten()
+    preds = model.predict(img).flatten()
 
     # get predictions index sorted based on the best predictions
     value_ = preds.argsort()
@@ -265,27 +303,32 @@ def predict_disease(img_path, species, model_type=VGG_ARCHITECTURE, do_print=Tru
     Args:
         img_path: filesystem path of an image
         species: name of species
-        do_print: print information about the prediction
         model_type: type of model to be used for prediction
+        do_print: print information about the prediction
 
     Returns:
-        the top one predicted disease
+        the top one predicted disease or None if the species is not supported(has no disease model yet for the species)
     """
-    if species not in SUPPORTED_SPECIES:
+    if species not in SPECIES:
         raise ValueError("No such `{}` species is supported.\n"
-                         "Supported species are {}".format(species, SUPPORTED_SPECIES))
+                         "Supported species are {}".format(species, SPECIES))
 
-    SPECIES_CLASSES = get_classes(species)
-    model_path = os.path.join(MODEL_STORAGE_BASE, get_disease_model(species, model_type))
+    if species not in DISEASE_SUPPORTED_SPECIES:
+        print("Info: For `{}` species, a disease can not be predicted "
+              "since its disease model is not implemented yet.".format(species))
+        return None
+    else:
+        SPECIES_CLASSES = get_classes(species)
+        model_path = os.path.join(MODEL_STORAGE_BASE, get_disease_model(species, model_type))
 
-    preds, sorted_preds_index = get_predictions(model_path, img_path, TARGET_SIZE_DISEASE)
+        preds, sorted_preds_index = get_predictions(model_path, img_path, TARGET_SIZE_DISEASE)
 
-    if do_print:
-        print("Plant Disease : ")
-        for i in sorted_preds_index:
-            print("\t-" + str(SPECIES_CLASSES[i]) + " : \t" + str(preds[i]))
+        if do_print:
+            print("Plant Disease : ")
+            for i in sorted_preds_index:
+                print("\t-" + str(SPECIES_CLASSES[i]) + " : \t" + str(preds[i]))
 
-    return str(SPECIES_CLASSES[sorted_preds_index[0]])
+        return str(SPECIES_CLASSES[sorted_preds_index[0]])
 
 
 def get_cmd_args():
@@ -309,6 +352,9 @@ def get_cmd_args():
 if __name__ == "__main__":
     args = get_cmd_args()
 
+    # setup appropriate modules based on model type
+    setup_inceptionv3_modules(args.model)
+
     # if not segment and species is not known
     if args.segment == False and args.species == '':
         species = predict_species(args.image, args.model)
@@ -325,7 +371,7 @@ if __name__ == "__main__":
 
     # if segment and species is given
     elif args.segment == True and args.species != '':
-        species, image_name = segment_and_predict_species(args.image, False, args.model)
+        species, image_name = segment_and_predict_species(args.image, args.model, False)
         predict_disease(image_name, species, args.model)
 
     # should not enter here

@@ -57,14 +57,14 @@ phase 3 : [experement and if possible generate Apprprate data
 
 # Usage
 
-	Python main.py [--image  IMAGE FILE] [--segment BOOLIAN PARAMETER] [--species SPECIES TYPE] [--Model PREDICTION_MODEL]
+	Python main.py IMAGE_FILE [--segment BOOLEAN_PARAMETER] [--species SPECIES_TYPE] [--model PREDICTION_MODEL]
 
 	arguments
 
-		- --image       loaction of the image
+		- IMAGE_FILE    loaction of the image
 		- --segment     True to  Segment before prediction , False not to 
 		- --species     one of the Following Specious :  Apple,Cherry,Corn, Grape,Peach, Pepper,Potato,Strawberry, Sugercane, Tomato
-		- --model       what models do you want to use VGG or Inception_V3
+		- --model       what models do you want to use, vgg or inceptionv3
 
 
 
@@ -73,7 +73,7 @@ phase 3 : [experement and if possible generate Apprprate data
 
 		 	# you can remove a part of arguments except image path
 
-		 >>  python main.py --image "test/a.jpg" --segment True --species "Apple" --model 'Inception_v3'
+		 >>  python main.py "test/a.jpg" --segment True --species "Apple" --model 'inceptionv3'
 	   
 
 - before using that make sure you download the weights from   [here for Inception_V3](https://drive.google.com/file/d/1PZ0SUyGbcKJidNcSfwKsnhR23O2PBl78/view?usp=sharing) and  [here for VGG Models](https://drive.google.com/file/d/1AufdWYl-TfeicAmaweq6Gd8q3--vuBfA/view?usp=sharing)  and extract all and put it in Plant_Disease_Detection_Benchmark_models/Models/  folder 
@@ -81,7 +81,7 @@ phase 3 : [experement and if possible generate Apprprate data
 - This will segment the image and predict the output class based on that . segmented image will be saved as the file name with "_masked" prefix.
 
 
-- the images are traine with segmented network and lower performance on unsegmented dataset is expected 
+- the images are trained with segmented network and lower performance on unsegmented dataset is expected 
 
 -  You can cheack the segmentation accuracy from saved image
 

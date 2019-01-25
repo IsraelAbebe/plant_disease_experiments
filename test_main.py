@@ -39,11 +39,11 @@ class TestMain(unittest.TestCase):
         mock_parser.add_argument.assert_any_call('image', type=str, help=mock.ANY)
 
         # check for optional cmd args
-        mock_parser.add_argument.assert_any_call('--model', default=VGG_ARCHITECTURE,
+        mock_parser.add_argument.assert_any_call('--model', type=str.lower, default=VGG_ARCHITECTURE,
                                                  choices=[VGG_ARCHITECTURE, main.INCEPTIONV3_ARCHITECTURE],
                                                  help=mock.ANY)
-        mock_parser.add_argument.assert_any_call('--segment', type=bool, default=False, help=mock.ANY)
-        mock_parser.add_argument.assert_any_call('--species', type=str, default='', help=mock.ANY)
+        mock_parser.add_argument.assert_any_call('--segment', action='store_true', help=mock.ANY)
+        mock_parser.add_argument.assert_any_call('--species', type=str.lower, default='', help=mock.ANY)
 
         # check cmd args are parsed and returned from the function
         self.assertEqual(args, mock_parser.parse_args.return_value)
@@ -91,12 +91,12 @@ class TestGetPredictions(unittest.TestCase):
         cls.img_path = 'img_path'
         cls.target_size = (5, 5)
 
-    @mock.patch('main._image')
-    @mock.patch('main._load_model')
+    @mock.patch('main.image')
+    @mock.patch('main.load_model')
     @mock.patch('main.np')
     @mock.patch('main.Image')
     @mock.patch('main.os.path')
-    def test_get_predictions_raises_error_if_model_file_doesnot_exist_only(self,  mock_path, _Image, _np, _load, _image):
+    def test_get_predictions_raises_error_if_model_file_doesnot_exist_only(self, mock_path, _Image, _np, _load, _image):
         # if model path exist, valueerror should not be raised
         mock_path.exists.return_value = True
         try:
@@ -109,8 +109,8 @@ class TestGetPredictions(unittest.TestCase):
         with self.assertRaises(ValueError) as ve:
             main.get_predictions('dummy_path', 'dummy_path', self.target_size)
 
-    @mock.patch('main._image')
-    @mock.patch('main._load_model')
+    @mock.patch('main.image')
+    @mock.patch('main.load_model')
     @mock.patch('main.np')
     @mock.patch('main.Image')
     @mock.patch('main.os.path')
@@ -122,8 +122,8 @@ class TestGetPredictions(unittest.TestCase):
 
         _load.return_value.predict.assert_called_once()
 
-    @mock.patch('main._image')
-    @mock.patch('main._load_model')
+    @mock.patch('main.image')
+    @mock.patch('main.load_model')
     @mock.patch('main.np')
     @mock.patch('main.Image')
     @mock.patch('main.os.path')
@@ -138,9 +138,9 @@ class TestGetPredictions(unittest.TestCase):
 
         _image.img_to_array.assert_called_once_with(_Image.open.return_value.resize.return_value)
 
-    @mock.patch('main._preprocess_input')
-    @mock.patch('main._image')
-    @mock.patch('main._load_model')
+    @mock.patch('main.preprocess_input')
+    @mock.patch('main.image')
+    @mock.patch('main.load_model')
     @mock.patch('main.np')
     @mock.patch('main.Image')
     @mock.patch('main.os.path')
@@ -151,9 +151,9 @@ class TestGetPredictions(unittest.TestCase):
         _preprocess.assert_called_once_with(_np.expand_dims.return_value)
         _load.return_value.predict.assert_called_once_with(_preprocess.return_value)
 
-    @mock.patch('main._preprocess_input')
-    @mock.patch('main._image')
-    @mock.patch('main._load_model')
+    @mock.patch('main.preprocess_input')
+    @mock.patch('main.image')
+    @mock.patch('main.load_model')
     @mock.patch('main.np')
     @mock.patch('main.Image')
     @mock.patch('main.os.path')
@@ -169,6 +169,25 @@ class TestGetPredictions(unittest.TestCase):
         np.testing.assert_array_equal(sorrting_index, expected_sorting_index)
 
 
+class TestSegmentImage(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.img_path = 'img_path.jpg'
+        cls.segmented_img_path = 'img_path_marked.jpg'
+
+    @mock.patch('main.subprocess')
+    def test_segment_image_returns_the_right_file_name(self, _subprocess):
+        result_img_path = main.segment_image(self.img_path)
+
+        self.assertEqual(self.segmented_img_path, result_img_path)
+
+    @mock.patch('main.subprocess')
+    def test_segment_image_segments_given_image(self, _subprocess):
+        result_img_path = main.segment_image(self.img_path)
+
+        _subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", self.img_path])
+
+
 class TestPipelines(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -176,6 +195,7 @@ class TestPipelines(unittest.TestCase):
         cls.unsupported_species = 'xx'
         cls.species_model = 'apple.h5'
         cls.disease_model = 'healthy.h5'
+        cls.default_model_type = VGG_ARCHITECTURE
         cls.model_path = 'model_path'
         cls.img_path = 'img_path.jpg'
         cls.segmented_img_path = 'img_path_marked.jpg'
@@ -210,53 +230,59 @@ class TestPipelines(unittest.TestCase):
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
-    @mock.patch('main.subprocess')
-    def test_segment_and_predict_species_image_is_segmented(self, _subprocess, _get_species_model, _get_predictions):
+    @mock.patch('main.segment_image')
+    def test_segment_and_predict_species_image_is_segmented(self, _segment_image, _get_species_model, _get_predictions):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
 
-        main.segment_and_predict_species(self.img_path, False)
+        main.segment_and_predict_species(self.img_path, self.default_model_type, False)
 
-        _subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", self.img_path])
+        _segment_image.assert_called_once_with(self.img_path)
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
-    @mock.patch('main.subprocess')
-    def test_segment_and_predict_species_loads_correct_model_and_segmented_image_with_right_size(self, _subprocess,
+    @mock.patch('main.segment_image')
+    def test_segment_and_predict_species_loads_correct_model_and_segmented_image_with_right_size(self, _segment_image,
                                                                                                  _get_species_model,
                                                                                                  _get_predictions):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
+        _segment_image.return_value = self.segmented_img_path
         model_path = os.path.join(main.MODEL_STORAGE_BASE, self.species_model)
 
-        main.segment_and_predict_species(self.img_path, False)
+        for model_type in main.SUPPORTED_MODEL_TYPES:
+            main.segment_and_predict_species(self.img_path, model_type, False)
 
-        _get_predictions.assert_called_once_with(model_path, self.segmented_img_path, main.TARGET_SIZE_SPECIES)
+            target_img_size = main.TARGET_IMAGE_SIZES[model_type][main.SPECIES_DETECTION]
+            _get_predictions.assert_called_with(model_path, self.segmented_img_path, target_img_size)
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
-    @mock.patch('main.subprocess')
-    def test_segment_and_predict_species_returns_what_is_expected(self, _subprocess, _get_species_model,
+    @mock.patch('main.segment_image')
+    def test_segment_and_predict_species_returns_what_is_expected(self, _segment_image, _get_species_model,
                                                                   _get_predictions):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
+        _segment_image.return_value = self.segmented_img_path
 
-        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, False)
+        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, self.default_model_type,
+                                                                             False)
 
         self.assertEqual(top_species, main.SPECIES[self.sorting_index[0]])
         self.assertEqual(segmented_image_name, self.segmented_img_path)
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
-    @mock.patch('main.subprocess')
-    def test_segment_and_predict_species_prints_the_right_thing(self, _subprocess, _get_species_model,
-                                                                _get_predictions):
+    @mock.patch('main.segment_image')
+    def test_segment_and_predict_species_prints_the_right_result(self, _segment_image, _get_species_model,
+                                                                 _get_predictions):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
         out_string = io.StringIO()
         sys.stdout = out_string
 
-        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, do_print=True)
+        top_species, segmented_image_name = main.segment_and_predict_species(self.img_path, self.default_model_type,
+                                                                             True)
 
         # check one random item from a list of printed results
         random_i = random.choice(self.sorting_index)
@@ -272,9 +298,11 @@ class TestPipelines(unittest.TestCase):
         _get_predictions.return_value = self.preds, self.sorting_index
         model_path = os.path.join(main.MODEL_STORAGE_BASE, self.species_model)
 
-        main.predict_species(self.img_path, False)
+        for model_type in main.SUPPORTED_MODEL_TYPES:
+            main.predict_species(self.img_path, model_type, False)
 
-        _get_predictions.assert_called_once_with(model_path, self.img_path, main.TARGET_SIZE_SPECIES)
+            target_img_size = main.TARGET_IMAGE_SIZES[model_type][main.SPECIES_DETECTION]
+            _get_predictions.assert_called_with(model_path, self.img_path, target_img_size)
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
@@ -283,20 +311,20 @@ class TestPipelines(unittest.TestCase):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
 
-        top_species = main.predict_species(self.img_path, False)
+        top_species = main.predict_species(self.img_path, self.default_model_type, False)
 
         self.assertEqual(top_species, main.SPECIES[self.sorting_index[0]])
 
     @mock.patch('main.get_predictions')
     @mock.patch('main.get_species_model')
-    def test_predict_species_returns_prints_the_right_thing(self, _get_species_model,
-                                                            _get_predictions):
+    def test_predict_species_prints_the_right_result(self, _get_species_model,
+                                                     _get_predictions):
         _get_species_model.return_value = self.species_model
         _get_predictions.return_value = self.preds, self.sorting_index
         out_string = io.StringIO()
         sys.stdout = out_string
 
-        main.predict_species(self.img_path, True)
+        main.predict_species(self.img_path, self.default_model_type, True)
 
         # check one random item from a list of printed results
         random_i = random.choice(self.sorting_index)
@@ -311,9 +339,11 @@ class TestPipelines(unittest.TestCase):
         _get_predictions.return_value = self.preds, self.sorting_index
         model_path = os.path.join(main.MODEL_STORAGE_BASE, self.disease_model)
 
-        main.predict_disease(self.img_path, self.supported_species, False)
+        for model_type in main.SUPPORTED_MODEL_TYPES:
+            main.predict_disease(self.img_path, self.supported_species, model_type, False)
 
-        _get_predictions.assert_called_once_with(model_path, self.img_path, main.TARGET_SIZE_DISEASE)
+            target_img_size = main.TARGET_IMAGE_SIZES[model_type][main.DISEASE_DETECTION]
+            _get_predictions.assert_called_with(model_path, self.img_path, target_img_size)
 
     @mock.patch('main.get_classes')
     @mock.patch('main.get_disease_model')
@@ -325,9 +355,9 @@ class TestPipelines(unittest.TestCase):
         _get_predictions.return_value = self.preds, self.sorting_index
         _get_classes.return_value = main.APPLE_CLASSES
 
-        top_disease = main.predict_disease(self.img_path, self.supported_species, False)
+        top_disease = main.predict_disease(self.img_path, self.supported_species, self.default_model_type, False)
 
-        _get_classes.assert_called_once_with(self.supported_species)
+        _get_classes.assert_called_with(self.supported_species)
         self.assertEqual(top_disease, main.APPLE_CLASSES[self.sorting_index[0]])
 
     @mock.patch('main.get_classes')
@@ -340,7 +370,7 @@ class TestPipelines(unittest.TestCase):
         out_string = io.StringIO()
         sys.stdout = out_string
 
-        main.predict_disease(self.img_path, self.supported_species, True)
+        main.predict_disease(self.img_path, self.supported_species, self.default_model_type, True)
 
         # check one random item from a list of printed results
         random_i = random.choice(self.sorting_index)

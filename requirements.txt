@@ -1,0 +1,5 @@
+# N.B: This requirements file contains packages that are needed to run main.py file only.
+
+numpy
+tensorflow
+Pillow

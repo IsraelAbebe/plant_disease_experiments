@@ -5,17 +5,9 @@ import numpy as np
 
 from PIL import Image
 
-from keras.models import load_model
-from keras.preprocessing import image
-from keras.applications.inception_v3 import preprocess_input
-
-# Since a model trained by tensorflow.keras and keras implementation is not compatible to be used by
-# each other awkwardly, these global variables will be set to appropriate package modules based on the model type used
-# i.e   - VGG models trained with         : keras package implementation
-#       - InceptionV3 models trained with : tensorflow.keras package implementation
-_load_model = load_model
-_image = image
-_preprocess_input = preprocess_input
+from tensorflow.python.keras.models import load_model
+from tensorflow.python.keras.preprocessing import image
+from tensorflow.python.keras.applications.inception_v3 import preprocess_input
 
 # species names
 APPLE = 'apple'
@@ -73,14 +65,26 @@ PLANT_CLASSES = {
     TOMATO: TOMATO_CLASSES,
 }
 
-# image target sizes
-TARGET_SIZE_DISEASE = (100, 100)
-TARGET_SIZE_SPECIES = (100, 100)
-
 # types of models to be used for predictions
 VGG_ARCHITECTURE = 'vgg'
 INCEPTIONV3_ARCHITECTURE = 'inceptionv3'
 SUPPORTED_MODEL_TYPES = {VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE}
+
+# modes of detection i.e detecting plant disease or species
+DISEASE_DETECTION = 'disease_detection'
+SPECIES_DETECTION = 'species_detection'
+
+# image target sizes for our supported model architectures
+TARGET_IMAGE_SIZES = {
+    VGG_ARCHITECTURE: {
+        DISEASE_DETECTION: (64, 64),
+        SPECIES_DETECTION: (100, 100),
+    },
+    INCEPTIONV3_ARCHITECTURE: {
+        DISEASE_DETECTION: (100, 100),
+        SPECIES_DETECTION: (100, 100),
+    }
+}
 
 # vgg models to be used with their species name as key
 VGG_MODELS = {
@@ -112,30 +116,6 @@ INCEPTIONV3_MODELS = {
 
 # base path from where models will be loaded
 MODEL_STORAGE_BASE = 'Plant_Disease_Detection_Benchmark_models/Models'
-
-
-def setup_inceptionv3_modules(model_type):
-    """
-    Since a model trained by tensorflow.keras and keras implementation is not compatible to be used by
-    each other awkwardly, this function will load and set appropriate modules based on the model type used
-    i.e - use tensorflow.python.keras package when using inceptionv3 model
-        - use keras package when using vgg model
-
-    Args:
-        model_type: type of model architecture i.e inceptionv3, vgg, ...
-    """
-    global _load_model
-    global _image
-    global _preprocess_input
-
-    if model_type == INCEPTIONV3_ARCHITECTURE:
-        from tensorflow.python.keras.models import load_model
-        from tensorflow.python.keras.preprocessing import image
-        from tensorflow.python.keras.applications.inception_v3 import preprocess_input
-
-        _load_model = load_model
-        _image = image
-        _preprocess_input = preprocess_input
 
 
 def get_classes(species_name):
@@ -215,14 +195,14 @@ def get_predictions(model_path, img_path, img_target_size):
         raise ValueError('No such `{}` file found\n'
                          'Please, checkout the readme of the project '
                          'on github and download required models'.format(model_path))
-    model = _load_model(model_path)
+    model = load_model(model_path)
 
     # get image as array and resize it if necessary
     pil_img = Image.open(img_path)
     if pil_img.size != img_target_size:
         pil_img = pil_img.resize(img_target_size)
 
-    img = _image.img_to_array(pil_img)
+    img = image.img_to_array(pil_img)
 
     # if alpha channel found, discard it
     if img.shape[2] == 4:
@@ -230,7 +210,7 @@ def get_predictions(model_path, img_path, img_target_size):
 
     # preprocess image
     img = np.expand_dims(img, axis=0)
-    img = _preprocess_input(img)
+    img = preprocess_input(img)
 
     preds = model.predict(img).flatten()
 
@@ -239,6 +219,24 @@ def get_predictions(model_path, img_path, img_target_size):
     sorted_preds_index = value_[::-1]
 
     return preds, sorted_preds_index
+
+
+def segment_image(img_path):
+    """
+    Segment leaf from an image and create new segmented image file
+
+    Args:
+        img_path: filesystem path of an image
+
+    Returns:
+        segmented image file name
+    """
+    image_name, extension = os.path.splitext(img_path)
+    segmented_image_name = image_name + "_marked" + extension  # the future segmented image name to be
+    result = subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", img_path])
+    print('Info: Input image segmented.')
+
+    return segmented_image_name
 
 
 def segment_and_predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
@@ -255,18 +253,17 @@ def segment_and_predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=
             1. the top one predicted species
             2. segmented image path
     """
-    image_name, extension = os.path.splitext(img_path)
-    segmented_image_name = image_name + "_marked" + extension  # the future segmented image name to be
-    result = subprocess.check_output(['python', "leaf-image-segmentation/segment.py", "-s", img_path])
+    segmented_image_name = segment_image(img_path)
 
     model_path = os.path.join(MODEL_STORAGE_BASE, get_species_model(model_type))
 
-    preds, sorted_preds_index = get_predictions(model_path, segmented_image_name, TARGET_SIZE_SPECIES)
+    target_image_size = TARGET_IMAGE_SIZES[model_type][SPECIES_DETECTION]
+    preds, sorted_preds_index = get_predictions(model_path, segmented_image_name, target_image_size)
 
     if do_print:
         print("Plant Species :")
         for i in sorted_preds_index:
-            print("\t - " + str(SPECIES[i]) + " : \t" + str(preds[i]))
+            print("\t - " + str(SPECIES[i]) + ": \t" + str(preds[i]))
 
     return str(SPECIES[sorted_preds_index[0]]), segmented_image_name
 
@@ -286,12 +283,13 @@ def predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
 
     model_path = os.path.join(MODEL_STORAGE_BASE, get_species_model(model_type))
 
-    preds, sorted_preds_index = get_predictions(model_path, img_path, TARGET_SIZE_SPECIES)
+    target_image_size = TARGET_IMAGE_SIZES[model_type][SPECIES_DETECTION]
+    preds, sorted_preds_index = get_predictions(model_path, img_path, target_image_size)
 
     if do_print:
         print("Plant Species :")
         for i in sorted_preds_index:
-            print("\t - " + str(SPECIES[i]) + " : \t" + str(preds[i]))
+            print("\t - " + str(SPECIES[i]) + ": \t" + str(preds[i]))
 
     return str(SPECIES[sorted_preds_index[0]])
 
@@ -321,12 +319,13 @@ def predict_disease(img_path, species, model_type=VGG_ARCHITECTURE, do_print=Tru
         SPECIES_CLASSES = get_classes(species)
         model_path = os.path.join(MODEL_STORAGE_BASE, get_disease_model(species, model_type))
 
-        preds, sorted_preds_index = get_predictions(model_path, img_path, TARGET_SIZE_DISEASE)
+        target_image_size = TARGET_IMAGE_SIZES[model_type][DISEASE_DETECTION]
+        preds, sorted_preds_index = get_predictions(model_path, img_path, target_image_size)
 
         if do_print:
             print("Plant Disease : ")
             for i in sorted_preds_index:
-                print("\t-" + str(SPECIES_CLASSES[i]) + " : \t" + str(preds[i]))
+                print("\t-" + str(SPECIES_CLASSES[i]) + ": \t" + str(preds[i]))
 
         return str(SPECIES_CLASSES[sorted_preds_index[0]])
 
@@ -339,11 +338,12 @@ def get_cmd_args():
          list of command line arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("image", type=str, help='image path')
-    parser.add_argument('--model', default=VGG_ARCHITECTURE, choices=[VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE],
-                        help='Type of model')
-    parser.add_argument("--segment", type=bool, default=False, help='add segmentation')
-    parser.add_argument("--species", type=str, default='', help='Species Name if known')
+    parser.add_argument("image", type=str, help='Image file path')
+    parser.add_argument('--model', type=str.lower, default=VGG_ARCHITECTURE,
+                        choices=[VGG_ARCHITECTURE, INCEPTIONV3_ARCHITECTURE],
+                        help='Type of model to user for prediction')
+    parser.add_argument("--segment", action='store_true', help='Perform segmentation before prediction')
+    parser.add_argument("--species", type=str.lower, default='', help='Species Name if known')
     args = parser.parse_args()
 
     return args
@@ -351,9 +351,6 @@ def get_cmd_args():
 
 if __name__ == "__main__":
     args = get_cmd_args()
-
-    # setup appropriate modules based on model type
-    setup_inceptionv3_modules(args.model)
 
     # if not segment and species is not known
     if args.segment == False and args.species == '':
@@ -371,8 +368,8 @@ if __name__ == "__main__":
 
     # if segment and species is given
     elif args.segment == True and args.species != '':
-        species, image_name = segment_and_predict_species(args.image, args.model, False)
-        predict_disease(image_name, species, args.model)
+        image_name = segment_image(args.image)
+        predict_disease(image_name, args.species, args.model)
 
     # should not enter here
     else:

@@ -5,7 +5,7 @@
 
 
 **Resources:**
-- [Data set](https://github.com/spMohanty/PlantVillage-Dataset)
+- [Dataset](https://github.com/spMohanty/PlantVillage-Dataset)
 
 - Additional dataset will be relesed 
 
@@ -15,11 +15,11 @@
 
 **Objective**
 
-- Train and Evaluate different DNN Models for plant deasise detection Problem
+- Train and Evaluate different DNN Models for plant disease detection problem
 
 - To tackle the problem of scarce real-life representative data, experiment with different generative networks and generate more plant leaf image data
 
-- Implement segmentation pipeline to avoid missclassification due to unwanted input 
+- Implement segmentation pipeline to avoid misclassification due to unwanted input 
 
 
 
@@ -29,8 +29,8 @@ phase 1 : [implement the paper](https://github.com/singnet/plant-disease-experim
 
 phase 2 : do analysis on the paper and identify the type of data problem 
 
-phase 3 : [experement and if possible generate Apprprate data
-		  using the data train the model again](https://github.com/singnet/plant_disease_experements/tree/master/Plant_Disease_Detection_gan_experimants)
+phase 3 : [experiment and if possible generate appropriate data
+		  using the data to train the model again](https://github.com/singnet/plant_disease_experements/tree/master/Plant_Disease_Detection_gan_experimants)
 
 
 # Project Structure
@@ -45,7 +45,7 @@ phase 3 : [experement and if possible generate Apprprate data
 
 **leaf-image-segmentation-segnet**
 
-- segmentation pipline using VGGSegNet Architecture
+- segmentation pipeline using VGGSegNet Architecture
 
 **leaf-image-segmentation**
 
@@ -57,33 +57,31 @@ phase 3 : [experement and if possible generate Apprprate data
 
 # Usage
 
-	Python main.py IMAGE_FILE [--segment BOOLEAN_PARAMETER] [--species SPECIES_TYPE] [--model PREDICTION_MODEL]
+	python main.py IMAGE_FILE [--segment] [--species SPECIES_TYPE] [--model PREDICTION_MODEL]
 
-	arguments
-
-		- IMAGE_FILE    loaction of the image
-		- --segment     True to  Segment before prediction , False not to 
-		- --species     one of the Following Specious :  Apple,Cherry,Corn, Grape,Peach, Pepper,Potato,Strawberry, Sugercane, Tomato
-		- --model       what models do you want to use, vgg or inceptionv3
+	Arguments:
+		IMAGE_FILE    Path of the image file
+		--segment     If specified perform segmentation on the image before prediction
+		--species     If the plant species on the image is priorly known. One of the following species:  Apple, Cherry, Corn, Grape, Peach, Pepper, Potato, Strawberry, Sugercane, Tomato
+		--model       What models do you want to use, vgg or inceptionv3
 
 
 
 # Examples
 
-
-		 	# you can remove a part of arguments except image path
-
-		 >>  python main.py "test/a.jpg" --segment True --species "Apple" --model 'inceptionv3'
+	# you can remove a part of arguments except image path
+	
+	>>  python main.py 'test/a.jpg' --segment --species 'apple' --model 'inceptionv3'
 	   
 
-- before using that make sure you download the weights from   [here for Inception_V3](https://drive.google.com/file/d/1PZ0SUyGbcKJidNcSfwKsnhR23O2PBl78/view?usp=sharing) and  [here for VGG Models](https://drive.google.com/file/d/1AufdWYl-TfeicAmaweq6Gd8q3--vuBfA/view?usp=sharing)  and extract all and put it in Plant_Disease_Detection_Benchmark_models/Models/  folder 
+- Before using that make sure you download the weights from   [here for Inception_V3](https://drive.google.com/file/d/1PZ0SUyGbcKJidNcSfwKsnhR23O2PBl78/view?usp=sharing) and  [here for VGG Models](https://drive.google.com/file/d/1AufdWYl-TfeicAmaweq6Gd8q3--vuBfA/view?usp=sharing)  and extract all and put it in `Plant_Disease_Detection_Benchmark_models/Models/` folder. 
 		
-- This will segment the image and predict the output class based on that . segmented image will be saved as the file name with "_masked" prefix.
+- This will segment the image and predict the output class based on that. Segmented image will be saved as the file name with "_marked" suffix before the file extension.
 
 
-- the images are trained with segmented network and lower performance on unsegmented dataset is expected 
+- The images are trained with segmented network and lower performance on unsegmented dataset is expected.
 
--  You can cheack the segmentation accuracy from saved image
+- You can check the segmentation accuracy from saved image.
 
 
-- Fill [this form](https://goo.gl/forms/ceQNkEimLL8NN1sF2) for bulk model accsess grants and future update Notification
+- Fill [this form](https://goo.gl/forms/ceQNkEimLL8NN1sF2) for bulk model access grants and future update notification.

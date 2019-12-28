@@ -1,5 +1,4 @@
 # Plant Disease Detection using Deep Learning
-A Project to  Train and Evaluate different DNN Models for plant disease detection problem, tackle the problem of scarce real-life representative data, experiment with different generative networks and generate more plant leaf image data and  Implement segmentation pipeline to avoid misclassification due to unwanted input 
 
 [Using Deep Learning for Image-Based Plant Disease Detection](https://arxiv.org/pdf/1604.03169.pdf) 
 

@@ -1,0 +1,6 @@
+[submodule "leaf-image-segmentation-segnet"]
+	path = leaf-image-segmentation-segnet
+	url = https://github.com/IsraelAbebe/leaf-image-segmentation-segnet.git
+[submodule "leaf-image-segmentation"]
+	path = leaf-image-segmentation
+	url = https://github.com/YaredTaddese/leaf-image-segmentation

@@ -1,8 +1,5 @@
-
-.idea/*
+.idea
 *.jpg
 *.jpeg
 *.png
 *.gif
-logs/
-*.py[oc]

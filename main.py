@@ -121,10 +121,8 @@ MODEL_STORAGE_BASE = 'Plant_Disease_Detection_Benchmark_models/Models'
 def get_classes(species_name):
     """
     Get classes of disease for a species
-
     Args:
         species_name: name of species
-
     Returns:
         a list of disease classes for a specific species
     """
@@ -134,11 +132,9 @@ def get_classes(species_name):
 def get_disease_model(species, model_type):
     """
     Get appropriate disease classifier model file name
-
     Args:
         species: species name to identify which species model should be used
         model_type: type of model to be used for prediction
-
     Returns:
         disease classifier model file name
     """
@@ -158,11 +154,9 @@ def get_disease_model(species, model_type):
 def get_species_model(model_type):
     """
     Get appropriate species classifier model file name
-
     Args:
         species: species name to identify which species model should be used
         model_type: type of model to be used for prediction
-
     Returns:
         species classifier model file name
     """
@@ -179,12 +173,10 @@ def get_species_model(model_type):
 def get_predictions(model_path, img_path, img_target_size):
     """
     Loads model and image and make predictions using them
-
     Args:
         model_path: filesystem path of model
         img_path: filesystem path of image
         img_target_size: target image size to reshape the image if necessary
-
     Returns:
         a tuple of:
             1. array of prediction values by the model for all classes
@@ -224,10 +216,8 @@ def get_predictions(model_path, img_path, img_target_size):
 def segment_image(img_path):
     """
     Segment leaf from an image and create new segmented image file
-
     Args:
         img_path: filesystem path of an image
-
     Returns:
         segmented image file name
     """
@@ -242,12 +232,10 @@ def segment_image(img_path):
 def segment_and_predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given image path, first segment the image and predict species on the segmented image
-
     Args:
         img_path: filesystem path of an image
         do_print: print information about the prediction
         model_type: type of model to be used for prediction
-
     Returns:
         a tuple of:
             1. the top one predicted species
@@ -271,12 +259,10 @@ def segment_and_predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=
 def predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given an image path, predict the species on the raw image without segmenting
-
     Args:
         img_path: filesystem path of an image
         do_print: print information about the prediction
         model_type: type of model to be used for prediction
-
     Returns:
         the top one predicted species
     """
@@ -297,13 +283,11 @@ def predict_species(img_path, model_type=VGG_ARCHITECTURE, do_print=True):
 def predict_disease(img_path, species, model_type=VGG_ARCHITECTURE, do_print=True):
     """
     Given an image path and species of the image, predict the disease on the raw image without segmenting
-
     Args:
         img_path: filesystem path of an image
         species: name of species
         model_type: type of model to be used for prediction
         do_print: print information about the prediction
-
     Returns:
         the top one predicted disease or None if the species is not supported(has no disease model yet for the species)
     """
@@ -333,7 +317,6 @@ def predict_disease(img_path, species, model_type=VGG_ARCHITECTURE, do_print=Tru
 def get_cmd_args():
     """
     Get command line arguments if found or use default ones
-
     Returns:
          list of command line arguments
     """

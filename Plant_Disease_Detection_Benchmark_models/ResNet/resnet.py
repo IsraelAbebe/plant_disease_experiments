@@ -8,6 +8,7 @@ import six
 from keras.models import Model
 from keras.layers import Input,Activation,Dense,Flatten
 from keras.layers.convolutional import Conv2D,MaxPooling2D,AveragePooling2D
+
 from keras.layers import Dropout
 from keras.layers.merge import add
 from keras.layers.normalization import BatchNormalization
@@ -247,3 +248,4 @@ class ResnetBuilder(object):
     @staticmethod
     def build_resnet_152(input_shape, num_outputs):
         return ResnetBuilder.build(input_shape, num_outputs, bottleneck, [3, 8, 36, 3])
+

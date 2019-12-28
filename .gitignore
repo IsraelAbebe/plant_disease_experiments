@@ -1,8 +1,8 @@
+
 .idea/*
 *.jpg
 *.jpeg
 *.png
 *.gif
-*.pyc
-
 logs/
+*.py[oc]
